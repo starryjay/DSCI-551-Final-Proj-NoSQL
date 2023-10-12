@@ -27,56 +27,6 @@ def load_gp_data_to_file_system(gplay_df):
             key_counter = 0
             data = {}
     print("Created ", str(chunk_count - 1), " json files.")
-        
-'''
-    os.mkdir("./chunks")
-    i = 0
-    chunk_count = 1
-    for j in range(1000, len(gplay_df), 1000):
-        print("Inside for loop")
-        gplay_df.iloc[i:j].to_csv(os.path.join("./chunks/chunk" + str(chunk_count) + ".csv"))
-        chunk_count += 1
-        i += 1000
-    print("Created ", str(chunk_count), " files.")
-'''
-'''
-
-Make chunks directory
-Initialize chunk count to 1
-for loop (cycle through df, row by row):
-    Create dict
-    Keep counter of how many keys are in dict
-    Put 1000 App names in dict as keys, specifying value for each App as the other column names and values in their own dictionary - i.e. dict of dicts
-    Once counter reaches 1000, write dictionary to json object using chunk count (json.dumps())
-    Reset dictionary to empty and continue
-
-
-
-'''
-    
-
-'''
-   
-file1: {
-    
-    app1: {
-       
-       rating: ""
-       review: ""
-       
-    }
-    app2: {
-
-    }
-}
-   
-      
-   
-'''
-    
-    
-    
-    
     
 if __name__ == "__main__":
     
