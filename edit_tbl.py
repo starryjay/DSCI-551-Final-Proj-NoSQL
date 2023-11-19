@@ -4,11 +4,7 @@ from loaddata import load_data_to_file_system, clean_data
 global colnames
 global dtypes
 
-global dtype_dict
-
 def edit(user_query_list, current_db):
-    global dtype_dict
-    dtype_dict = {"int": 'int64', "str": 'string', "float": 'float64', "datetime64": 'datetime64[ns]'}
     if not os.path.exists('./table/' + user_query_list[0] + ".pkl"):
         print("Invalid query - tablename does not exist!")
         return
@@ -135,7 +131,6 @@ def delete(user_query_list):
         chunk_path = "./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk" + str(chunkno) + ".csv"
         if os.path.exists(chunk_path):
             table = pd.read_csv(chunk_path)
-        global dtype_dict
         for colname, datatype in zip(colnames, dtypes):
             table[colname] = table[colname].astype(datatype)
         rownum = (rownum % 10000) + 1

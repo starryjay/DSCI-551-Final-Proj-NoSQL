@@ -10,7 +10,7 @@ def clean_data(user_query_list, filepath):
     return gp_data
     
 
-def load_gp_data_to_file_system(df, currentdb=None):
+def load_data_to_file_system(df, currentdb=None):
     if currentdb is not None:
         if os.path.exists("./" + df.name + "_chunks"):
             print("Dataset already chunked!")

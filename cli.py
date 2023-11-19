@@ -80,10 +80,10 @@ class CLI(cmd.Cmd):
         if self.current_db is not None:
             if user_input_query[0].upper() == "REL":
                 os.chdir("..")
-                os.chdir("../DSCI-551-Final-Proj-Rel")
+                os.chdir("./DSCI-551-Final-Proj-Rel")
             elif user_input_query[0].upper() == "NOSQL":
                 os.chdir("..")
-                os.chdir("../DSCI-551-Final-Proj-NoSQL")
+                os.chdir("./DSCI-551-Final-Proj-NoSQL")
             if not os.path.exists(user_input_query[1]):
                 print("DB does not exist!")
         else:
@@ -103,26 +103,29 @@ class CLI(cmd.Cmd):
             self.current_db = None
             if user_input_query[0].upper() == "REL":
                 os.chdir("..")
-                os.chdir("../DSCI-551-Final-Proj-Rel")
+                os.chdir("./DSCI-551-Final-Proj-Rel")
             elif user_input_query[0].upper() == "NOSQL":
                 os.chdir("..")
-                os.chdir("../DSCI-551-Final-Proj-NoSQL")
+                os.chdir("./DSCI-551-Final-Proj-NoSQL")
         elif self.current_db is not None:
             if user_input_query[0].upper() == "REL":
                 os.chdir("..")
-                os.chdir("../DSCI-551-Final-Proj-Rel")
+                os.chdir("./DSCI-551-Final-Proj-Rel")
             elif user_input_query[0].upper() == "NOSQL":
                 os.chdir("..")
-                os.chdir("../DSCI-551-Final-Proj-NoSQL")
+                os.chdir("./DSCI-551-Final-Proj-NoSQL")
         else:
             if user_input_query[0].upper() == "REL":
-                os.chdir("../DSCI-551-Final-Proj-Rel")
+                os.chdir("./DSCI-551-Final-Proj-Rel")
             elif user_input_query[0].upper() == "NOSQL":
-                os.chdir("../DSCI-551-Final-Proj-NoSQL")
+                print(os.getcwd())
+                os.chdir("./DSCI-551-Final-Proj-NoSQL")
         if user_input_query[1] not in os.listdir('.'):
             print("DB does not exist!")
             return
         else:
+            for filename in os.listdir("./" + user_input_query[1]):
+                os.remove("./" + user_input_query[1] + filename)
             os.rmdir("./" + user_input_query[1])
             if user_input_query[0].upper() == "REL":
                 print("Dropped relational DB", user_input_query[1])
@@ -137,29 +140,36 @@ class CLI(cmd.Cmd):
 
         Syntax: SHOWDB REL/NOSQL
         """
-        if user_input_query[0].upper() == "REL":
+        if user_input_query.upper() == "REL":
             os.chdir("..")
-            os.chdir("../DSCI-551-Final-Proj-Rel")
-        elif user_input_query[0].upper() == "NOSQL":
+            os.chdir("./DSCI-551-Final-Proj-Rel")
+        elif user_input_query.upper() == "NOSQL":
             os.chdir("..")
-            os.chdir("../DSCI-551-Final-Proj-NoSQL")
+            os.chdir("./DSCI-551-Final-Proj-NoSQL")
         for filename in os.listdir("."):
-            if os.path.isdir("./" + filename) and not filename.startswith("_") and not filename.startswith("."):
+            if os.path.isdir("./" + filename) and not filename.startswith("_") and not filename.startswith(".") and not filename=="table":
                 print(filename)
 
     def do_make(self, user_input_query):
         """
         Use this keyword at the beginning of a query
-        to make a new table within the current database.
+        to make a new table/document within the current database.
 
-        Syntax for MAKE (new table): 
-            MAKE tablename COLUMNS col1=dtype1, col2=dtype2, col3=dtype3...
-        Syntax for MAKE COPY (existing table):
-            MAKE COPY tablename1 tablename2
+        Relational:
+            Syntax for MAKE (new table): 
+                MAKE tablename COLUMNS col1=dtype1, col2=dtype2, col3=dtype3...
+            Syntax for MAKE COPY (existing table):
+                MAKE COPY tablename1 tablename2
+
+        NoSQL:
+            Syntax for MAKE (new document): 
+                MAKE docname NODES node1=dtype1, node2=dtype2, node3=dtype3...
+            Syntax for MAKE COPY (existing document):
+                MAKE COPY docname jsonname2
 
         Supported datatypes are int, float, datetime64, and str. You MUST type these exactly as written.
-        If using MAKE COPY, do not use COLUMNS. 
-        MAKE COPY will only copy the table's schema, not its contents.
+        If using MAKE COPY, do not use COLUMNS/NODES. 
+        MAKE COPY will only copy the table/document's schema, not its contents.
 
         """
         user_input_query = "MAKE " + user_input_query
@@ -175,15 +185,15 @@ class CLI(cmd.Cmd):
             EDIT tablename INSERT/UPDATE/DELETE record
 
         Syntax for INSERT (one record at a time): 
-            EDIT tablename INSERT col1=x, col2=y, col3=z...
+            EDIT tablename/docname INSERT col1/node1=x, col2/node2=y, col3/node3=z...
         Syntax for INSERT (whole file): 
-            EDIT tablename INSERT FILE filepath
+            EDIT tablename/docname INSERT FILE filepath
         Syntax for UPDATE: 
-            EDIT tablename UPDATE id=rownum, col3=abc, col5=xyz... 
+            EDIT tablename/docname UPDATE id=rownum, col3=abc, col5=xyz... 
         Syntax for DELETE: 
-            EDIT tablename DELETE id=rownum...
+            EDIT tablename/docname DELETE id=rownum...
 
-        When using INSERT FILE, do not wrap the filename in quotes.
+        When using INSERT FILE, do not wrap the filepath in quotes.
         """
         user_input_query = "EDIT " + user_input_query
         return parse_query(user_input_query, self.current_db)
@@ -195,14 +205,16 @@ class CLI(cmd.Cmd):
         fetch existing table and perform aggregation, bunching, 
         filtering, sorting, or merging operations on specified columns.
 
-        Syntax: FETCH tablename [COLUMNS] [column(s)] [AGGREGATION FUNCTION] [column] [BUNCH/SORT/MERGE] [column] [HAS] [column(s)]
+        Relational:
+            Syntax: FETCH tablename [COLUMNS] [column(s)] [AGGREGATION FUNCTION] [column] [BUNCH/SORT/MERGE] [column] [HAS] [column(s)]
+
+        NoSQL:
+            Syntax: FETCH docname [NODES] [node(s)] [AGGREGATION FUNCTION] [node] [BUNCH/SORT/MERGE] [node] [HAS] [node(s)]
 
         Brackets indicate optional query parameters.
-
-        Possible aggregation functions: TOTALNUM, SUM, MEAN, MIN, MAX
-
+        Possible aggregation functions are TOTALNUM, SUM, MEAN, MIN, and MAX.
         * Keywords should specifically be in the order of 
-          COLUMNS --> TOTALNUM/SUM/MEAN/MIN/MAX --> BUNCH --> SORT --> MERGE --> HAS
+          COLUMNS/NODES --> TOTALNUM/SUM/MEAN/MIN/MAX --> BUNCH --> SORT --> MERGE --> HAS
 
         """
         user_input_query = "FETCH " + user_input_query
