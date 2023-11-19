@@ -1,6 +1,5 @@
-import pandas as pd
 import os
-from datetime import date
+import json
 
 # Datatypes to account for: int, str, float, datetime64
 global nodenames
@@ -10,13 +9,13 @@ def make(user_query_list):
     if user_query_list[0].upper() == "COPY":
         return make_copy(user_query_list[1:])
     elif user_query_list[1].upper() == "NODES":
-        tablename = user_query_list[0]
-        for char in tablename:
+        docname = user_query_list[0]
+        for char in docname:
             if char.isdigit():
-                print("Please use a tablename without any numbers in it.")
+                print("Please use a docname without any numbers in it.")
                 return
-        if tablename in os.listdir(os.getcwd()):
-            print("Table with name", tablename, "already exists! Please use a different name.")
+        if docname in os.listdir(os.getcwd()):
+            print("Document with name", docname, "already exists! Please use a different name.")
             return
         nodestuples = [tuple(data.split('=')) for data in user_query_list[2:]]
         global nodenames
@@ -25,24 +24,28 @@ def make(user_query_list):
         dtypes = [nodestuples[i][1].lower() for i in range(len(nodestuples))]
         doc = {nodename: 0 for nodename in nodenames}
         for nodename, datatype in zip(nodenames, dtypes):
-            # iterate thru, convert all values to appropriate dtypes
-            continue # placeholder
-        if not os.path.exists("./table"):
-            os.mkdir("./table")
-        print("Successfully created document", tablename, "with nodes", nodenames, "and datatypes", dtypes)
+            doc[nodename] = datatype
+        if not os.path.exists("./document"):
+            os.mkdir("./document")
+        json_object = json.dumps(doc, indent=1)
+        with open("./document/" + docname + ".json", "w") as outfile:
+            outfile.write(json_object)
+        print("Successfully created document", docname, "with nodes", nodenames, "and datatypes", dtypes)
     else:
-        print("Please use keyword COPY or COLUMNS!")
+        print("Please use keyword COPY or NODES!")
         return
 def make_copy(user_query_list):
-    existingtable = user_query_list[0]
-    copytable = user_query_list[1]
-    if copytable in os.listdir(os.getcwd()):
-        print("Table with name", copytable, "already exists! Please use a different name.")
+    existingdoc = user_query_list[0]
+    copydoc = user_query_list[1]
+    if copydoc in os.listdir(os.getcwd()):
+        print("Document with name", copydoc, "already exists! Please use a different name.")
         return
-    curr_table = pd.read_pickle("./table/" + existingtable + '.pkl')
-    copy = curr_table.copy(deep=False)
-    copy.to_pickle("./table/" + copytable + '.pkl')
-    print("Successfully created copy of table", existingtable, "called", copytable, "with columns", nodenames, "and datatypes", dtypes)
+    with open("./document/" + existingdoc + ".json") as infile:
+        curr_doc = json.load(infile)
+    copy = json.dumps(curr_doc, indent=1)
+    with open("./document/" + copydoc + ".json", "w") as outfile:
+        outfile.write(copy)
+    print("Successfully created copy of table", existingdoc, "called", copydoc, "with nodes", list(curr_doc.keys()), "and datatypes", list(curr_doc.values()))
 
 
     """

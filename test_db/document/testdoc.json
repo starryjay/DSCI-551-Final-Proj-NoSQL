@@ -1,0 +1,6 @@
+{
+ "node1": "int",
+ "node2": "str",
+ "node3": "float",
+ "node4": "datetime64"
+}
