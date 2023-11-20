@@ -19,15 +19,15 @@ def load_data_to_file_system(df, currentdb=None):
     else:
         print("Not in a database, please enter a database with USEDB first")
     chunk_count = 1
-    cols = list(df.columns)[1:]
-    nums = [j for j in range (1, 13)]
-    iter = df.itertuples(index=False)
+    cols = list(df.columns)
+    nums = [j for j in range (1, len(list(df.columns))+1)]
+    iter = df.itertuples()
     data = {}
     for row in iter:
         data[row[0]] = {k: row[v] for k, v in zip(cols, nums)}
         if len(data) == 1000:
             json_object = json.dumps(data, indent=1)
-            with open("./chunks/chunk" + str(chunk_count) + ".json", "w") as outfile:
+            with open("./" + df.name + "_chunks/" + df.name + "_chunk" + str(chunk_count) + ".json", "w") as outfile:
                 outfile.write(json_object)
             chunk_count += 1
             data = {}

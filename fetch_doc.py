@@ -21,25 +21,53 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def fetch(user_query_list):
-    doc = json.load('./document/' + user_query_list[0] + '.json')
+    with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
+        doc = json.load(docread)
+    doc = json.dumps(doc, indent=1)
     agglist = ["TOTALNUM", "SUM", "MEAN", "MIN", "MAX"]
     uqlupper = list(map(str.upper, user_query_list))
     if "BUNCH" in uqlupper and (not set(agglist).isdisjoint(set(uqlupper))):
+        if type(doc) != dict:
+            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
+                doc = json.load(docread)
         doc = bunch_agg(user_query_list, doc)
     elif "BUNCH" in uqlupper:
+        if type(doc) != dict:
+            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
+                doc = json.load(docread)
         doc = bunch(user_query_list, doc)
     elif (not set(agglist).isdisjoint(set(uqlupper))):
+        if type(doc) != dict:
+            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
+                doc = json.load(docread)
         doc = agg_functions(user_query_list, doc)
         if type(doc) == str:
             return
     if "SORT" in uqlupper:
+        if type(doc) != dict:
+            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
+                doc = json.load(docread)
         doc = sort(user_query_list)
     elif "MERGE" in uqlupper:
         doc = merge(user_query_list)
     if "HAS" in uqlupper:
         doc = has(user_query_list)
-    if "COLUMNS" in uqlupper:
-        doc = doc.loc[:, get_columns(user_query_list)]
+    if "NODES" in uqlupper:
+        nodes_list = get_columns(user_query_list)
+        if type(doc) != dict:
+            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
+                doc = json.load(docread)
+        newdoc = {}
+        for k, v in doc.items():
+            for k2, v2 in v.items():
+                if k2 in nodes_list and k not in newdoc.keys():
+                    newdoc[k] = {k2: v2}
+                elif k2 in nodes_list:
+                    newdoc[k]
+                    newdoc[k][k2] = v2
+        newdoc = json.dumps(newdoc, indent=1)
+        print(newdoc)
+        return
     print(doc)
 
 def get_columns(user_query_list):
@@ -93,68 +121,59 @@ def agg_functions(user_query_list, doc):
 def docsum(user_query_list, doc):
     uqlupper = list(map(str.upper, user_query_list))
     key = user_query_list[uqlupper.index("SUM") + 1]
+    keytype = list(doc.items())[0][1][key]
     sumkey = "sum_" + key
     total_sum = 0
-    # check if key to sum is int or float - if not, print error statement and return "failed"
-    if not (isinstance(key, int) or isinstance(key, float)): 
+    if not (isinstance(keytype, int) or isinstance(keytype, float)): 
         print("Error: Cannot sum on this type")
         return "failed"
     if "nodes" in user_query_list and key in get_columns(user_query_list):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/col_agg"):
             os.mkdir(chunk_path + "/col_agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v:
-                            total_sum += v[key]
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[sumkey] = total_sum
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v:
+                        total_sum += v[key]
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[sumkey] = total_sum
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/col_agg/" + chunk + "_col_sum.json", "w") as outfile:
+                with open(chunk_path + "/col_agg/" + chunk[:-5] + "_col_sum.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_col_sum.json")
+            else:
+                continue
+        with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_sum.json") as docread:
+            doc = json.load(docread)
     elif key in get_columns(user_query_list):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v:
-                            total_sum += v[key]
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[sumkey] = total_sum
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v:
+                        total_sum += v[key]
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[sumkey] = total_sum
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/agg/" + chunk + "_sum.json", "w") as outfile:
+                with open(chunk_path + "/agg/" + chunk[:-5] + "_sum.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_sum.json")
+        with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_sum.json") as docread:
+            doc = json.load(docread)
     return doc 
-    
-  
-    # check if nodes keyword is present, and if key to sum has been included in nodes list
-        # else print error statement and return to exit function
-        # open chunks folder, create /col_agg directory
-        # read json inside chunks folder
-        # create dict key with sum, insert into every node's nested dict
-        # save json in /col_agg with _col_sum appended to filename
-    # if nodes keyword not present, do above except save to /agg directory inside chunks folder
-    # return json
-
-
-
 
 def totalnum(user_query_list, doc):
     uqlupper = list(map(str.upper, user_query_list))
@@ -165,50 +184,56 @@ def totalnum(user_query_list, doc):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/col_agg"):
             os.mkdir(chunk_path + "/col_agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v:
-                            total += 1
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[totalnumkey] = total
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v:
+                        total += 1
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[totalnumkey] = total
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/col_agg/" + chunk + "_col_totalnum.json", "w") as outfile:
+                with open(chunk_path + "/col_agg/" + chunk[:-5] + "_col_totalnum.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_col_totalnum.json")
+        with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_totalnum.json") as docread:
+            doc = json.load(docread)
     elif key in get_columns(user_query_list):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v:
-                            total += 1
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[totalnumkey] = total
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v:
+                        total += 1
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[totalnumkey] = total
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/agg/" + chunk + "_totalnum.json", "w") as outfile:
+                with open(chunk_path + "/agg/" + chunk[:-5] + "_totalnum.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_totalnum.json")
+        with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_totalnum.json") as docread:
+            doc = json.load(docread)
     return doc
 
 
 def mean(user_query_list, doc):
     uqlupper = list(map(str.upper, user_query_list))
     key = user_query_list[uqlupper.index("MEAN") + 1]
+    keytype = list(doc.items())[0][1][key]
+    if not (isinstance(keytype, int) or isinstance(keytype, float)): 
+        print("Error: Cannot calculate mean on this type")
+        return "failed"
     meankey = "mean_" + key
     total = 0
     num_nodes = 0
@@ -216,46 +241,48 @@ def mean(user_query_list, doc):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/col_agg"):
             os.mkdir(chunk_path + "/col_agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v:
-                            total += v[key]
-                            num_nodes += 1
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[meankey] = total/num_nodes
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v:
+                        total += v[key]
+                        num_nodes += 1
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[meankey] = total/num_nodes
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/col_agg/" + chunk + "_col_mean.json", "w") as outfile:
+                with open(chunk_path + "/col_agg/" + chunk[:-5] + "_col_mean.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_col_mean.json")
+        with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_mean.json") as docread:
+            doc = json.load(docread)
     elif key in get_columns(user_query_list):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v:
-                            total += v[key]
-                            num_nodes += 1
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[meankey] = total/num_nodes
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v:
+                        total += v[key]
+                        num_nodes += 1
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[meankey] = total/num_nodes
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/agg/" + chunk + "_mean.json", "w") as outfile:
+                with open(chunk_path + "/agg/" + chunk[:-5] + "_mean.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_mean.json")
+        with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_mean.json") as docread:
+            doc = json.load(docread)
     return doc
 
 def docmin(user_query_list, doc):
@@ -267,93 +294,97 @@ def docmin(user_query_list, doc):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/col_agg"):
             os.mkdir(chunk_path + "/col_agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v and v[key] < curr_min:
-                            curr_min = v[key]
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[minkey] = curr_min
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v and v[key] < curr_min:
+                        curr_min = v[key]
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[minkey] = curr_min
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/col_agg/" + chunk + "_col_min.json", "w") as outfile:
+                with open(chunk_path + "/col_agg/" + chunk[:-5] + "_col_min.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_col_min.json")
+        with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_min.json") as docread:
+            doc = json.load(docread)
     elif key in get_columns(user_query_list):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v and v[key] < curr_min:
-                            curr_min = v[key]
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[minkey] = curr_min
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v and v[key] < curr_min:
+                        curr_min = v[key]
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[minkey] = curr_min
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/agg/" + chunk + "_min.json", "w") as outfile:
+                with open(chunk_path + "/agg/" + chunk[:-5] + "_min.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_min.json")
+        with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_min.json") as docread:
+            doc = json.load(docread)
     return doc
 
 def docmax(user_query_list, doc):
     uqlupper = list(map(str.upper, user_query_list))
     key = user_query_list[uqlupper.index("MAX") + 1]
-    maxkey = "min_" + key
+    maxkey = "max_" + key
     curr_max = float("-inf")
     if "nodes" in user_query_list and key in get_columns(user_query_list):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/col_agg"):
             os.mkdir(chunk_path + "/col_agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v and v[key] > curr_max:
-                            curr_max = v[key]
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[maxkey] = curr_max
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v and v[key] > curr_max:
+                        curr_max = v[key]
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[maxkey] = curr_max
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/col_agg/" + chunk + "_col_max.json", "w") as outfile:
+                with open(chunk_path + "/col_agg/" + chunk[:-5] + "_col_max.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_col_max.json")
+        with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_max.json") as docread:
+            doc = json.load(docread)
     elif key in get_columns(user_query_list):
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        if key in v and v[key] > curr_max:
-                            curr_max = v[key]
-            for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
-                    with open(chunk_path+"/"+chunk) as curr_chunk:
-                        curr_doc = json.load(curr_chunk)
-                    for v in curr_doc.values():
-                        v[maxkey] = curr_max
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    if key in v and v[key] > curr_max:
+                        curr_max = v[key]
+        for chunk in os.listdir(chunk_path):
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for v in curr_doc.values():
+                    v[maxkey] = curr_max
                 outdoc = json.dumps(curr_doc, indent=1)
-                with open(chunk_path + "/agg/" + chunk + "_max.json", "w") as outfile:
+                with open(chunk_path + "/agg/" + chunk[:-5] + "_max.json", "w") as outfile:
                     outfile.write(outdoc)
-        doc = json.load(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_max.json")
+        with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_max.json") as docread:
+            doc = json.load(docread)
     return doc
 
 def bunch_agg(user_query_list, doc):
@@ -562,7 +593,8 @@ def bunch(user_query_list, doc):
             with open(bunched_chunk_path + "/" + chunk[:-5] + "_bunch.json", "w") as outfile:
                 outfile.write(bunched)
             bunched_dict = {key: {} for key in unique_bunchkey_list}
-        doc = json.load(bunched_chunk_path + "/" + user_query_list[0] + "_chunk1" + "_bunch.json")
+        with open(bunched_chunk_path + "/" + user_query_list[0] + "_chunk1" + "_bunch.json") as docread:
+            doc = json.load(docread)
     return doc
 
 def merge(user_query_list):
@@ -586,7 +618,7 @@ def sort(user_query_list):
         sorted_dict = sort_bunch(user_query_list, sortnode)
     if "MERGE" in uqlupper:
         common_node = user_query_list[uqlupper.index("INCOMMON") + 1]
-        sorted_dict = sort_merge(user_query_list, common_col)
+        sorted_dict = sort_merge(user_query_list, common_node)
     elif "BUNCH" not in uqlupper and "MERGE" not in uqlupper:
         directory = find_directory(user_query_list)
         directory = sort_within_chunks(user_query_list, sortnode, directory)
@@ -614,7 +646,8 @@ def sort_bunch(user_query_list, sortcol):
     sorted_chunk_directory = "./"+ user_query_list[0] + "_chunks/sorted_chunks"
     for chunk in os.listdir(file_path):
         if os.path.isfile(file_path + "/" + chunk) and agg_present and chunk[0] != "." and chunk.endswith(which_agg.lower() + ".json"):      # CHANGE THIS IN RELATIONAL
-            doc = json.load(file_path + "/" + chunk)
+            with open(file_path + "/" + chunk) as docread:
+                doc = json.load(docread)
             doc_keys = list(doc.keys())
             if not os.path.exists(sorted_chunk_directory):
                 os.mkdir(sorted_chunk_directory)
@@ -634,7 +667,8 @@ def sort_bunch(user_query_list, sortcol):
                         outfile.write(newdoc)
                     doc_num += 1
         elif os.path.isfile(file_path + "/" + chunk) and not agg_present and chunk[0] != "." and chunk.endswith("_bunch.json"):      # ADD THIS IN RELATIONAL
-            doc = json.load(file_path + "/" + chunk)
+            with open(file_path + "/" + chunk) as docread:
+                doc = json.load(docread)
             doc_keys = list(doc.keys())
             if not os.path.exists(sorted_chunk_directory):
                 os.mkdir(sorted_chunk_directory)
@@ -657,12 +691,14 @@ def sort_bunch(user_query_list, sortcol):
     for filename in sorted(os.listdir(sorted_chunk_directory)):
         if bunchcol[:-8] != sortcol:
             if "level" in filename:
-                sorted_chunk = json.load(sorted_chunk_directory + "/" + filename)
+                with open(sorted_chunk_directory + "/" + filename) as sortread:
+                    sorted_chunk = json.load(sortread)
                 for k, v in sorted_chunk.items():
                     final_sorted_doc[k] = v
         else:
             if ("sorted_on_bunch" in filename) and (which_agg.lower() in filename):
-                sorted_chunk = json.load(sorted_chunk_directory + "/" + filename)
+                with open(sorted_chunk_directory + "/" + filename) as sortread:
+                    sorted_chunk = json.load(sortread)
                 for k, v in sorted_chunk.items():
                     final_sorted_doc[k] = v
     return final_sorted_doc
@@ -680,7 +716,8 @@ def sort_merge(user_query_list, sortcol):
     merged_directory2 = directory2 + "/merged_docs"
     for filename in os.listdir(directory1):
         if os.path.isfile(directory1 + "/" + filename) and filename[0] != ".":
-            newdoc = json.load(directory1 + "/" + filename)
+            with open(directory1 + "/" + filename) as newread:
+                newdoc = json.load(newread)
             newdoc = simple_sort(sortcol, newdoc)
             newdoc = json.dumps(newdoc, indent=1)
             with open(merged_directory1 + "/" + filename, "w") as outfile:
@@ -688,7 +725,8 @@ def sort_merge(user_query_list, sortcol):
             newdoc.to_csv(merged_directory1 + "/" + filename)
     for filename in os.listdir(directory2):
         if os.path.isfile(directory2 + "/" + filename) and filename[0] != ".":
-            newdoc2 = json.load(directory2 + "/" + filename)
+            with open(directory2 + "/" + filename) as newread2:
+                newdoc2 = json.load(newread2)
             newdoc2 = simple_sort(sortcol, newdoc2)
             newdoc2 = json.dumps(newdoc2, indent=1)
             with open(merged_directory2 + "/" + filename, "w") as outfile:
@@ -699,8 +737,10 @@ def sort_merge(user_query_list, sortcol):
         for right_chunk in os.listdir(merged_directory2):
             if os.path.isfile(merged_directory1 + "/" + left_chunk) and os.path.isfile(merged_directory2 + "/" + right_chunk) and left_chunk[0] != "." and right_chunk[0] != ".":
                 if "merged" not in left_chunk and "merged" not in right_chunk:
-                    left = json.load(directory1 + "/" + left_chunk)
-                    right = json.load(directory2 + "/" + right_chunk)
+                    with open(directory1 + "/" + left_chunk) as leftread:
+                        left = json.load(leftread)
+                    with open(directory2 + "/" + right_chunk) as rightread:
+                        right = json.load(rightread)
                     for i1 in range(len(left)):
                         appdata1 = left[i1]
                         if appdata1 is None:
@@ -728,7 +768,8 @@ def sort_within_chunks(user_query_list, sortcol, directory):
     if not os.path.exists(sorted_chunk_directory):
         os.mkdir(sorted_chunk_directory)
     for chunk in os.listdir(directory):
-        doc = json.load(directory + "/" + chunk)
+        with open(directory + "/" + chunk) as docread:
+            doc = json.load(docread)
         doc_keys = list(doc.keys())
         doc_keys.sort()
         sorted_doc = {i: doc[i] for i in doc_keys}
@@ -743,7 +784,8 @@ def sort_between_chunks(user_query_list, sortcol, directory):
         os.mkdir("./" + docname + "_chunks/chunk_subsets")
     for filename in os.listdir(directory):
         if os.path.isfile(directory + "/" + filename) and filename[0] != ".":
-            file_subset = json.load(directory + "/" + filename)
+            with open(directory + "/" + filename) as fileread:
+                file_subset = json.load(fileread)
             file_subset_name = f"{filename.split('.')[0]}_subset.json"
             file_subset_path = os.path.join("./"+ docname + "_chunks/chunk_subsets", file_subset_name)
             out = json.dumps(file_subset)
@@ -751,14 +793,17 @@ def sort_between_chunks(user_query_list, sortcol, directory):
                 outfile.write(out)
     subset_files = os.listdir("./"+ docname + "_chunks/chunk_subsets")
     while len(subset_files) > 1:
-        chunk1 = json.load("./"+ docname + "_chunks/chunk_subsets" + subset_files.pop(0))
-        chunk2 = json.load("./"+ docname + "_chunks/chunk_subsets" + subset_files.pop(0))
+        with open("./"+ docname + "_chunks/chunk_subsets" + subset_files.pop(0)) as chunk1read:
+            chunk1 = json.load(chunk1read)
+        with open("./"+ docname + "_chunks/chunk_subsets" + subset_files.pop(0)) as chunk2read:
+            chunk2 = json.load(chunk2read)
         sorted_merged = merge_asc(chunk1.values.tolist(), chunk2.values.tolist(), sortcol)
         sorted_merged = json.dumps(sorted_merged, indent=1)
         with open("./"+ docname + "_chunks/chunk_subsets", f"merged_subset_{len(subset_files) + 1 }.json") as outfile:
             outfile.write(sorted_merged)
         subset_files.append(f"merged_subset_{len(subset_files) + 1 }.json")
-    final_merged_doc = json.load(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files[0]))
+    with open(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files[0])) as finalread:
+        final_merged_doc = json.load(finalread)
     return final_merged_doc
 
 def merge_sort(doc_list, sortcol): 
@@ -817,16 +862,21 @@ def has_logic(user_query_list, directory):
     full_condition = ""
     if condidx != len(uqlupper) - 1:
         conds = user_query_list[condidx:]
-    for c in conds:
-        full_condition += " "
-        full_condition += c
+        for c in conds:
+            full_condition += " "
+            full_condition += c
+    else:
+        conds = user_query_list[condidx]
+        full_condition = conds
     condition = full_condition.strip().replace("\"", "").replace("\'", "")
     for chunk in os.listdir("./" + user_query_list[0] + "_chunks/" + directory):
         if os.path.isfile("./" + user_query_list[0] + "_chunks/" + directory + "/" + chunk) and chunk[0] != ".":
             if "MERGE" in uqlupper and "merged" in chunk:
-                doc = json.load("./" + user_query_list[0] + "_chunks/" + directory + "/" + chunk)
+                with open("./" + user_query_list[0] + "_chunks/" + directory + "/" + chunk) as docread:
+                    doc = json.load(docread)
             elif "MERGE" not in uqlupper:
-                doc = json.load("./" + user_query_list[0] + "_chunks/" + directory + "/" + chunk)
+                with open("./" + user_query_list[0] + "_chunks/" + directory + "/" + chunk) as docread:
+                    doc = json.load(docread)
             if "<" in condition:
                 cond = condition.split("<")
                 col1 = cond[0]
@@ -834,22 +884,22 @@ def has_logic(user_query_list, directory):
                 if col1 not in list(doc.values())[0]:
                     return 
                 if cond2 not in list(doc.values())[0]:
-                    type1 = type(doc[0][col1])
+                    type1 = type(list(doc.items())[0][1][col1])
                     if '.' in cond2:
                         cond2 = float(cond2)
                     elif cond2.isdigit():
                         cond2 = int(cond2)
                     type2 = type(cond2)
                     if type1 == type2: 
-                        doc = {k: v for k, v in doc if v[col1] < cond2}
+                        doc = {k: v for k, v in doc.items() if v[col1] < cond2}
                     else:   
-                        if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
+                        if isinstance(type1, str) or isinstance(type2, str):
                             print("Incompatible type comparison")
                             return
                         else:
-                            doc = {k: v for k, v in doc if v[col1] < cond2}
+                            doc = {k: v for k, v in doc.items() if v[col1] < cond2}
                 else:
-                    doc = {k: v for k, v in doc if v[col1] < v[cond2]}
+                    doc = {k: v for k, v in doc.items() if v[col1] < v[cond2]}
             elif ">" in condition:
                 cond = condition.split(">")
                 col1 = cond[0]
@@ -857,22 +907,22 @@ def has_logic(user_query_list, directory):
                 if col1 not in list(doc.values())[0]:
                     return 
                 if cond2 not in list(doc.values())[0]:
-                    type1 = type(doc[0][col1])
+                    type1 = type(list(doc.items())[0][1][col1])
                     if '.' in cond2:
                         cond2 = float(cond2)
                     elif cond2.isdigit():
                         cond2 = int(cond2)
                     type2 = type(cond2)
                     if type1 == type2: 
-                        doc = {k: v for k, v in doc if v[col1] > cond2}
+                        doc = {k: v for k, v in doc.items() if v[col1] > cond2}
                     else:   
                         if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
                             print("Incompatible type comparison")
                             return
                         else:
-                            doc = {k: v for k, v in doc if v[col1] > cond2}
+                            doc = {k: v for k, v in doc.items() if v[col1] > cond2}
                 else:
-                    doc = {k: v for k, v in doc if v[col1] > v[cond2]}
+                    doc = {k: v for k, v in doc.items() if v[col1] > v[cond2]}
             elif "=" in condition:
                 cond = condition.split("=")
                 col1 = cond[0]
@@ -880,25 +930,27 @@ def has_logic(user_query_list, directory):
                 if col1 not in list(doc.values())[0]:
                     return 
                 if cond2 not in list(doc.values())[0]:
-                    type1 = type(doc[0][col1])
+                    type1 = type(list(doc.items())[0][1][col1])
                     if '.' in cond2:
                         cond2 = float(cond2)
                     elif cond2.isdigit():
                         cond2 = int(cond2)
                     type2 = type(cond2)
                     if type1 == type2: 
-                        doc = {k: v for k, v in doc if v[col1] == cond2}
+                        doc = {k: v for k, v in doc.items() if v[col1] == cond2}
                     else:   
                         if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
                             print("Incompatible type comparison")
                             return
                         else:
-                            doc = {k: v for k, v in doc if v[col1] == cond2}
+                            doc = {k: v for k, v in doc.items() if v[col1] == cond2}
                 else:
-                    doc = {k: v for k, v in doc if v[col1] == v[cond2]}
+                    doc = {k: v for k, v in doc.items() if v[col1] == v[cond2]}
+        else:
+            continue
         if not os.path.exists("./" + user_query_list[0] + "_chunks/" + directory + "/has_chunks"):
             os.mkdir("./" + user_query_list[0] + "_chunks/" + directory + "/has_chunks")
         out = json.dumps(doc, indent=1)
-        with open("./" + user_query_list[0] + "_chunks/" + directory + "/has_chunks"+ user_query_list[0] + "_has.json", "w") as outfile:
+        with open("./" + user_query_list[0] + "_chunks/" + directory + "/has_chunks/"+ user_query_list[0] + "_has.json", "w") as outfile:
             outfile.write(out)
         return doc

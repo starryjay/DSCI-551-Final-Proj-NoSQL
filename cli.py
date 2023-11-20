@@ -167,9 +167,11 @@ class CLI(cmd.Cmd):
             Syntax for MAKE COPY (existing document):
                 MAKE COPY docname jsonname2
 
-        Supported datatypes are int, float, datetime64, and str. You MUST type these exactly as written.
-        If using MAKE COPY, do not use COLUMNS/NODES. 
-        MAKE COPY will only copy the table/document's schema, not its contents.
+        * Supported datatypes are int, float, and str.
+        * Relational db also supports datetime64.
+        * You MUST type datatypes exactly as written here. No quotes.
+        * If using MAKE COPY, do not use COLUMNS/NODES. 
+        * MAKE COPY will only copy the table/document's schema, not its contents.
 
         """
         user_input_query = "MAKE " + user_input_query
@@ -193,7 +195,7 @@ class CLI(cmd.Cmd):
         Syntax for DELETE: 
             EDIT tablename/docname DELETE id=rownum...
 
-        When using INSERT FILE, do not wrap the filepath in quotes.
+        * When using INSERT FILE, do not wrap the filepath in quotes.
         """
         user_input_query = "EDIT " + user_input_query
         return parse_query(user_input_query, self.current_db)
@@ -211,8 +213,8 @@ class CLI(cmd.Cmd):
         NoSQL:
             Syntax: FETCH docname [NODES] [node(s)] [AGGREGATION FUNCTION] [node] [BUNCH/SORT/MERGE] [node] [HAS] [node(s)]
 
-        Brackets indicate optional query parameters.
-        Possible aggregation functions are TOTALNUM, SUM, MEAN, MIN, and MAX.
+        * Brackets indicate optional query parameters.
+        * Possible aggregation functions are TOTALNUM, SUM, MEAN, MIN, and MAX.
         * Keywords should specifically be in the order of 
           COLUMNS/NODES --> TOTALNUM/SUM/MEAN/MIN/MAX --> BUNCH --> SORT --> MERGE --> HAS
 
@@ -233,10 +235,15 @@ class CLI(cmd.Cmd):
     def do_show(self, user_input_query):
         """
         Use this keyword to show all tables in the current DB.
-        Make sure you're in a DB first, using USEDB. 
+        
+        * Make sure you're in a DB first, using USEDB. 
         """
-        for filename in os.listdir("./table"):
-            print("       ", filename[:-4])
+        if "Rel" in os.getcwd():
+            for filename in os.listdir("./table"):
+                print("       ", filename[:-4])
+        elif "NoSQL" in os.getcwd():
+            for filename in os.listdir("./document"):
+                print("       ", filename[:-5])
 
     def do_exit(self, *args):
         """

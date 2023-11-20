@@ -1,5 +1,4 @@
 import os
-from datetime import date
 from loaddata import load_data_to_file_system, clean_data
 import json 
 
@@ -20,23 +19,20 @@ def edit(user_query_list, current_db):
 
 def insert(user_query_list):
     doc = None 
-    with open("./document/" + user_query_list[0] + ".json"):
-        doc = json.load("./document/" + user_query_list[0] + ".json")
+    with open("./document/" + user_query_list[0] + ".json") as docread:
+        doc = json.load(docread)
     record_read = [tuple(data.split('=')) for data in user_query_list[2:]]
     record_data = record_read[1:]
     record_name = record_read[0][1]
     record = {record_name: dict(record_data)}
-    for k, v in record[record_name]:
+    for k, v in record[record_name].items():
         datatype = doc[k]
         if datatype == "int":
-            doc[k] = int(v)
+            record[record_name][k] = int(v)
         elif datatype == "str":
-            doc[k] == str(v)
+            record[record_name][k] = str(v)
         elif datatype == "float":
-            doc[k] == float(v)
-        elif datatype == "datetime64":
-            doc[k] = date(v)
-    print(record)
+            record[record_name][k] = float(v)
     chunk_path = "./" + user_query_list[0] + "_chunks"
     if os.path.exists(chunk_path):
         if os.listdir(chunk_path):
@@ -54,27 +50,41 @@ def insert(user_query_list):
                 curr_doc = json.load(curr_chunk)
             if len(curr_doc) < 1000:
                 newnode = json.dumps(record, indent=1)
-                with open(chunk_path+"/"+last, "w") as curr_chunk:
-                    curr_chunk.write(newnode)
+                print("json dumps result: ", newnode)
+                with open(chunk_path + "/" + last, "r") as fileread:
+                    file_content = fileread.read()
+                with open(chunk_path + "/" + last, "w") as newchunk:
+                    newchunk.write(file_content[:-1])
+                with open(chunk_path + "/" + last, "a") as curr_chunk:
+                    curr_chunk.write("," + newnode[1:])
                 print("Inserted into existing chunk number (", last, "): \n", record)
             else:
                 curr_doc = json.dumps(record, indent=1)
+                print("json dumps result: ", curr_doc)
                 new = user_query_list[0] + "_chunk" + str(max(chunknolist) + 1) + ".json"
-                with open(chunk_path + "/" + new, "w") as new_chunk:
+                with open(chunk_path + "/" + new, "a") as new_chunk:
                     new_chunk.write(curr_doc)
                 print("Inserted into new chunk (", new, "): ", record)
+        else: 
+            curr_doc = json.dumps(record, indent=1)
+            print("json dumps result: ", curr_doc)
+            new = user_query_list[0] + "_chunk" + str(1) + ".json"
+            with open(chunk_path + "/" + new, "a") as new_chunk:
+                new_chunk.write(curr_doc)
+            print("No chunks exist. Inserted into new chunk (", new, "): ", record)
     else: 
         os.mkdir(chunk_path)
         curr_doc = json.dumps(record, indent=1)
+        print("json dumps result: ", curr_doc)
         new = user_query_list[0] + "_chunk" + str(1) + ".json"
-        with open(chunk_path + "/" + new, "w") as new_chunk:
+        with open(chunk_path + "/" + new, "a") as new_chunk:
             new_chunk.write(curr_doc)
         print("No chunks exist. Inserted into new chunk (", new, "): ", record)
-        
+    
 def insert_file(user_query_list, current_db):
     doc = None 
-    with open("./document/" + user_query_list[0] + ".json"):
-        doc = json.load("./document/" + user_query_list[0] + ".json")
+    with open("./document/" + user_query_list[0] + ".json") as docread:
+        doc = json.load(docread)
     filepath = user_query_list[3]
     filename = os.path.basename(filepath)
     df = clean_data(user_query_list, filepath)
@@ -84,26 +94,28 @@ def insert_file(user_query_list, current_db):
         print("Chunk path not found!")
         return
     else:   
+        chunkno=1
         for chunk in os.listdir(chunk_path):
-            curr_chunk = json.load(chunk_path + "/" + chunk)
-            for k, v in curr_chunk.values():
-                datatype = doc[k]
-                if datatype == "int":
-                    curr_chunk[k] = int(v)
-                elif datatype == "str":
-                    curr_chunk[k] == str(v)
-                elif datatype == "float":
-                    curr_chunk[k] == float(v)
-                elif datatype == "datetime64":
-                    curr_chunk[k] = date(v)
+            with open(chunk_path + "/" + chunk) as chunkread:
+                curr_chunk = json.load(chunkread)
+            for k, v in curr_chunk.items():
+                for k2, v2 in v.items():
+                    datatype = doc[k2]
+                    if datatype == "int":
+                        curr_chunk[k][k2] = int(v2)
+                    elif datatype == "str":
+                        curr_chunk[k][k2] == str(v2)
+                    elif datatype == "float":
+                        curr_chunk[k][k2] == float(v2)
             cast_chunk = json.dumps(curr_chunk, indent=1)
-            with open(chunk_path + "/" + curr_chunk) as outfile:
+            with open(chunk_path + "/" + user_query_list[0] + "_chunk" + str(chunkno) + ".json", "w") as outfile:
                 outfile.write(cast_chunk)
+            chunkno += 1
         print("Inserted file", filename)
 
 def update(user_query_list):
-    with open("./document/" + user_query_list[0] + ".json"):
-        doc = json.load("./document/" + user_query_list[0] + ".json")
+    with open("./document/" + user_query_list[0] + ".json") as docread:
+        doc = json.load(docread)
     listoftuples = [tuple(data.split('=')) for data in user_query_list[2:]]
     nodename = listoftuples[0][1]
     listoftuples = listoftuples[1:]
@@ -124,8 +136,6 @@ def update(user_query_list):
                             curr_chunk[nodename][k] == str(mods[k])
                         elif datatype == "float":
                             curr_chunk[nodename][k] == float(mods[k])
-                        elif datatype == "datetime64":
-                            curr_chunk[nodename][k] = date(mods[k])
                 out_chunk = json.dumps(curr_chunk, indent=1)
                 with open(chunk_path + "/" + chunk, "w") as outfile:
                     outfile.write(out_chunk)
@@ -135,7 +145,8 @@ def delete(user_query_list):
     chunk_path = "./" + user_query_list[0] + "_chunks"
     if os.path.exists(chunk_path):
         for chunk in os.listdir(chunk_path):
-            curr_chunk = json.load(chunk_path + "/" + chunk)
+            with open(chunk_path + "/" + chunk) as chunkread:
+                curr_chunk = json.load(chunkread)
             if nodename in curr_chunk.keys():
                 curr_chunk.pop(nodename)
                 out_chunk = json.dumps(curr_chunk, indent=1)

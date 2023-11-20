@@ -1,0 +1,15 @@
+{
+ "App": "str",
+ "Category": "str",
+ "Rating": "float",
+ "Reviews": "int",
+ "Size": "str",
+ "Installs": "str",
+ "Type": "str",
+ "Price": "str",
+ "Content_Rating": "str",
+ "Genres": "str",
+ "Last_Updated": "str",
+ "Current_Ver": "str",
+ "Android_Ver": "str"
+}
