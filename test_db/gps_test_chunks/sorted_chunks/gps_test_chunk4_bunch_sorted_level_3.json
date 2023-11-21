@@ -1,19 +1,5 @@
 {
  "BEAUTY": {
-  "Best Hairstyles step by step": {
-   "Category": "BEAUTY",
-   "Rating": 4.5,
-   "Reviews": 45452,
-   "Size_Kb": 9420.8,
-   "Installs": 5000000,
-   "Type": "Free",
-   "Price": 0.0,
-   "Content_Rating": "Everyone",
-   "Genres": "Beauty",
-   "Last_Updated": "2018-07-19",
-   "Current_Ver": "1.25",
-   "Android_Ver": "4.0 and up"
-  },
   "BH Cosmetics": {
    "Category": "BEAUTY",
    "Rating": 4.0,
@@ -41,6 +27,20 @@
    "Last_Updated": "2018-03-06",
    "Current_Ver": "1.0.8",
    "Android_Ver": "4.0.3 and up"
+  },
+  "Best Hairstyles step by step": {
+   "Category": "BEAUTY",
+   "Rating": 4.5,
+   "Reviews": 45452,
+   "Size_Kb": 9420.8,
+   "Installs": 5000000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Beauty",
+   "Last_Updated": "2018-07-19",
+   "Current_Ver": "1.25",
+   "Android_Ver": "4.0 and up"
   }
  }
 }

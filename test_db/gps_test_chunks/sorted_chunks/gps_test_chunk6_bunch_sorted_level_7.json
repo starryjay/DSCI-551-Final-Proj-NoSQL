@@ -1,19 +1,5 @@
 {
  "COMICS": {
-  "Superheroes, Marvel, DC, Comics, TV, Movies News": {
-   "Category": "COMICS",
-   "Rating": 5.0,
-   "Reviews": 34,
-   "Size_Kb": 12288.0,
-   "Installs": 5000,
-   "Type": "Free",
-   "Price": 0.0,
-   "Content_Rating": "Everyone",
-   "Genres": "Comics",
-   "Last_Updated": "2018-07-31",
-   "Current_Ver": "1.0.5",
-   "Android_Ver": "5.0 and up"
-  },
   "Archie Comics": {
    "Category": "COMICS",
    "Rating": 3.8,
@@ -27,6 +13,20 @@
    "Last_Updated": "2018-06-19",
    "Current_Ver": "2.2.0",
    "Android_Ver": "4.3 and up"
+  },
+  "Superheroes, Marvel, DC, Comics, TV, Movies News": {
+   "Category": "COMICS",
+   "Rating": 5.0,
+   "Reviews": 34,
+   "Size_Kb": 12288.0,
+   "Installs": 5000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Comics",
+   "Last_Updated": "2018-07-31",
+   "Current_Ver": "1.0.5",
+   "Android_Ver": "5.0 and up"
   }
  }
 }

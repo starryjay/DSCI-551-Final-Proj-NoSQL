@@ -1,18 +1,18 @@
 {
  "FOOD_AND_DRINK": {
-  "\u00bfEs Vegan?": {
+  "El Pollo Loco - Loco Rewards": {
    "Category": "FOOD_AND_DRINK",
-   "Rating": 4.6,
-   "Reviews": 438,
-   "Size_Kb": 1740.8,
-   "Installs": 10000,
+   "Rating": 4.0,
+   "Reviews": 848,
+   "Size_Kb": 25600.0,
+   "Installs": 100000,
    "Type": "Free",
    "Price": 0.0,
    "Content_Rating": "Everyone",
    "Genres": "Food & Drink",
-   "Last_Updated": "2017-08-01",
-   "Current_Ver": "2.2.3",
-   "Android_Ver": "3.0 and up"
+   "Last_Updated": "2018-02-23",
+   "Current_Ver": "2.1",
+   "Android_Ver": "4.1 and up"
   },
   "3D Metal Piano Keys Keyboard Theme": {
    "Category": "FOOD_AND_DRINK",
@@ -28,19 +28,19 @@
    "Current_Ver": "6.7.1",
    "Android_Ver": "4.0.3 and up"
   },
-  "El Pollo Loco - Loco Rewards": {
+  "\u00bfEs Vegan?": {
    "Category": "FOOD_AND_DRINK",
-   "Rating": 4.0,
-   "Reviews": 848,
-   "Size_Kb": 25600.0,
-   "Installs": 100000,
+   "Rating": 4.6,
+   "Reviews": 438,
+   "Size_Kb": 1740.8,
+   "Installs": 10000,
    "Type": "Free",
    "Price": 0.0,
    "Content_Rating": "Everyone",
    "Genres": "Food & Drink",
-   "Last_Updated": "2018-02-23",
-   "Current_Ver": "2.1",
-   "Android_Ver": "4.1 and up"
+   "Last_Updated": "2017-08-01",
+   "Current_Ver": "2.2.3",
+   "Android_Ver": "3.0 and up"
   }
  }
 }

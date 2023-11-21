@@ -1,33 +1,5 @@
 {
  "SHOPPING": {
-  "efootwear.eu - online store": {
-   "Category": "SHOPPING",
-   "Rating": 4.5,
-   "Reviews": 928,
-   "Size_Kb": 8806.4,
-   "Installs": 100000,
-   "Type": "Free",
-   "Price": 0.0,
-   "Content_Rating": "Everyone",
-   "Genres": "Shopping",
-   "Last_Updated": "2018-08-02",
-   "Current_Ver": "1.7.0",
-   "Android_Ver": "4.4 and up"
-  },
-  "Ouedkniss": {
-   "Category": "SHOPPING",
-   "Rating": 4.3,
-   "Reviews": 10355,
-   "Size_Kb": 847.0,
-   "Installs": 1000000,
-   "Type": "Free",
-   "Price": 0.0,
-   "Content_Rating": "Teen",
-   "Genres": "Shopping",
-   "Last_Updated": "2018-06-19",
-   "Current_Ver": "1.5.1",
-   "Android_Ver": "4.0 and up"
-  },
   "DZ PROMOS - Promotions & Sale Alerts in Algeria": {
    "Category": "SHOPPING",
    "Rating": 4.1,
@@ -55,6 +27,34 @@
    "Last_Updated": "2018-06-27",
    "Current_Ver": "68",
    "Android_Ver": "4.1 and up"
+  },
+  "Ouedkniss": {
+   "Category": "SHOPPING",
+   "Rating": 4.3,
+   "Reviews": 10355,
+   "Size_Kb": 847.0,
+   "Installs": 1000000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Teen",
+   "Genres": "Shopping",
+   "Last_Updated": "2018-06-19",
+   "Current_Ver": "1.5.1",
+   "Android_Ver": "4.0 and up"
+  },
+  "efootwear.eu - online store": {
+   "Category": "SHOPPING",
+   "Rating": 4.5,
+   "Reviews": 928,
+   "Size_Kb": 8806.4,
+   "Installs": 100000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Shopping",
+   "Last_Updated": "2018-08-02",
+   "Current_Ver": "1.7.0",
+   "Android_Ver": "4.4 and up"
   }
  }
 }
