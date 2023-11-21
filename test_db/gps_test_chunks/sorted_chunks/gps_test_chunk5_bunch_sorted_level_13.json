@@ -1,0 +1,88 @@
+{
+ "FOOD_AND_DRINK": {
+  "Bar-B-Q Rib House": {
+   "Category": "FOOD_AND_DRINK",
+   "Rating": 5.0,
+   "Reviews": 2,
+   "Size_Kb": 33792.0,
+   "Installs": 50,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Food & Drink",
+   "Last_Updated": "2018-03-08",
+   "Current_Ver": "0.8",
+   "Android_Ver": "2.3.3 and up"
+  },
+  "Bar-B-Q Recipes": {
+   "Category": "FOOD_AND_DRINK",
+   "Rating": 4.8,
+   "Reviews": 18,
+   "Size_Kb": 3584.0,
+   "Installs": 5000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Food & Drink",
+   "Last_Updated": "2016-08-15",
+   "Current_Ver": "1",
+   "Android_Ver": "4.0 and up"
+  },
+  "BURGER KING\u00ae Puerto Rico": {
+   "Category": "FOOD_AND_DRINK",
+   "Rating": 4.5,
+   "Reviews": 2448,
+   "Size_Kb": 19456.0,
+   "Installs": 100000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Food & Drink",
+   "Last_Updated": "2017-09-01",
+   "Current_Ver": "5.4",
+   "Android_Ver": "4.0.3 and up"
+  },
+  "Coupons for Burger King": {
+   "Category": "FOOD_AND_DRINK",
+   "Rating": 4.5,
+   "Reviews": 41,
+   "Size_Kb": 4096.0,
+   "Installs": 500,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Teen",
+   "Genres": "Food & Drink",
+   "Last_Updated": "2018-07-17",
+   "Current_Ver": "1",
+   "Android_Ver": "5.0 and up"
+  },
+  "Baskin-Robbins": {
+   "Category": "FOOD_AND_DRINK",
+   "Rating": 3.8,
+   "Reviews": 1103,
+   "Size_Kb": 6758.4,
+   "Installs": 100000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Food & Drink",
+   "Last_Updated": "2018-06-08",
+   "Current_Ver": "1.4.0-2",
+   "Android_Ver": "4.1 and up"
+  },
+  "Woody's Bar-B-Q": {
+   "Category": "FOOD_AND_DRINK",
+   "Rating": 3.7,
+   "Reviews": 3,
+   "Size_Kb": 27648.0,
+   "Installs": 1000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Food & Drink",
+   "Last_Updated": "2018-03-05",
+   "Current_Ver": "1.01.03",
+   "Android_Ver": "4.1 and up"
+  }
+ }
+}

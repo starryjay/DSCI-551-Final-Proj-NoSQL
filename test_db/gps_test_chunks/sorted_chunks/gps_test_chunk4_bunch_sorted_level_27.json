@@ -1,0 +1,18 @@
+{
+ "WEATHER": {
+  "Weather BZ": {
+   "Category": "WEATHER",
+   "Rating": 4.4,
+   "Reviews": 8433,
+   "Size_Kb": 5734.4,
+   "Installs": 100000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Weather",
+   "Last_Updated": "2018-06-06",
+   "Current_Ver": "5.0.1 build 1",
+   "Android_Ver": "4.0 and up"
+  }
+ }
+}

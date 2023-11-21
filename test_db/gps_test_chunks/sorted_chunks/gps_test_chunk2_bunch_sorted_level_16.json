@@ -1,0 +1,32 @@
+{
+ "LIBRARIES_AND_DEMO": {
+  "ES Chromecast plugin": {
+   "Category": "LIBRARIES_AND_DEMO",
+   "Rating": 4.2,
+   "Reviews": 23859,
+   "Size_Kb": 860.0,
+   "Installs": 1000000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Libraries & Demo",
+   "Last_Updated": "2014-10-29",
+   "Current_Ver": "1",
+   "Android_Ver": "4.0 and up"
+  },
+  "FD VR - Virtual App Launcher": {
+   "Category": "LIBRARIES_AND_DEMO",
+   "Rating": 4.1,
+   "Reviews": 1463,
+   "Size_Kb": 7577.6,
+   "Installs": 100000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Libraries & Demo",
+   "Last_Updated": "2016-11-30",
+   "Current_Ver": "3.6.1",
+   "Android_Ver": "4.4 and up"
+  }
+ }
+}

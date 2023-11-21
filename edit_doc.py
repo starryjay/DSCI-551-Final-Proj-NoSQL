@@ -123,34 +123,36 @@ def update(user_query_list):
     chunk_path = "./" + user_query_list[0] + "_chunks"
     if os.path.exists(chunk_path):
         for chunk in os.listdir(chunk_path):
-            curr_chunk = json.load(chunk_path + "/" + chunk)
-            if nodename in curr_chunk.keys():
-                for k in curr_chunk[nodename].keys():
-                    #update values
-                    if k in mods.keys():
-                        curr_chunk[nodename][k] = mods[k]
-                        datatype = doc[k]
-                        if datatype == "int":
-                            curr_chunk[nodename][k] = int(mods[k])
-                        elif datatype == "str":
-                            curr_chunk[nodename][k] == str(mods[k])
-                        elif datatype == "float":
-                            curr_chunk[nodename][k] == float(mods[k])
-                out_chunk = json.dumps(curr_chunk, indent=1)
-                with open(chunk_path + "/" + chunk, "w") as outfile:
-                    outfile.write(out_chunk)
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path + "/" + chunk) as infile:
+                    curr_chunk = json.load(infile)
+                if nodename in curr_chunk.keys():
+                    for k in curr_chunk[nodename].keys():
+                        if k in mods.keys():
+                            curr_chunk[nodename][k] = mods[k]
+                            datatype = doc[k]
+                            if datatype == "int":
+                                curr_chunk[nodename][k] = int(mods[k])
+                            elif datatype == "str":
+                                curr_chunk[nodename][k] == str(mods[k])
+                            elif datatype == "float":
+                                curr_chunk[nodename][k] == float(mods[k])
+                    out_chunk = json.dumps(curr_chunk, indent=1)
+                    with open(chunk_path + "/" + chunk, "w") as outfile:
+                        outfile.write(out_chunk)
 
 def delete(user_query_list):
     nodename = user_query_list[2].split("=")[1]
     chunk_path = "./" + user_query_list[0] + "_chunks"
     if os.path.exists(chunk_path):
         for chunk in os.listdir(chunk_path):
-            with open(chunk_path + "/" + chunk) as chunkread:
-                curr_chunk = json.load(chunkread)
-            if nodename in curr_chunk.keys():
-                curr_chunk.pop(nodename)
-                out_chunk = json.dumps(curr_chunk, indent=1)
-                with open(chunk_path + "/" + chunk, "w") as outfile:
-                    outfile.write(out_chunk)
-                break
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path + "/" + chunk) as chunkread:
+                    curr_chunk = json.load(chunkread)
+                if nodename in curr_chunk.keys():
+                    curr_chunk.pop(nodename)
+                    out_chunk = json.dumps(curr_chunk, indent=1)
+                    with open(chunk_path + "/" + chunk, "w") as outfile:
+                        outfile.write(out_chunk)
+                    break
         print("deleted node", nodename)

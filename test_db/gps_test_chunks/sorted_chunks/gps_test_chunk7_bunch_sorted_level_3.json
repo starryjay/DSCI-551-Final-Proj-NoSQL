@@ -1,0 +1,46 @@
+{
+ "BEAUTY": {
+  "Beard Live Camera Photo Editor": {
+   "Category": "BEAUTY",
+   "Rating": 4.7,
+   "Reviews": 900,
+   "Size_Kb": 30720.0,
+   "Installs": 5000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Beauty",
+   "Last_Updated": "2018-03-25",
+   "Current_Ver": "1.1",
+   "Android_Ver": "4.0.3 and up"
+  },
+  "Skin Disease": {
+   "Category": "BEAUTY",
+   "Rating": 4.0,
+   "Reviews": 1,
+   "Size_Kb": 2252.8,
+   "Installs": 100,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Beauty",
+   "Last_Updated": "2017-08-30",
+   "Current_Ver": "1",
+   "Android_Ver": "2.2 and up"
+  },
+  "Female Daily": {
+   "Category": "BEAUTY",
+   "Rating": 3.9,
+   "Reviews": 4354,
+   "Size_Kb": 43008.0,
+   "Installs": 100000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Teen",
+   "Genres": "Beauty",
+   "Last_Updated": "2018-08-06",
+   "Current_Ver": "2.5.1",
+   "Android_Ver": "4.0.3 and up"
+  }
+ }
+}

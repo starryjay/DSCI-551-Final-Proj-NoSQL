@@ -1,0 +1,60 @@
+{
+ "AUTO_AND_VEHICLES": {
+  "AutoScout24 - used car finder": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 4.4,
+   "Reviews": 186648,
+   "Size_Kb": 43008.0,
+   "Installs": 10000000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2018-08-02",
+   "Current_Ver": "9.3.52",
+   "Android_Ver": "4.2 and up"
+  },
+  "CR-V Service Manual": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 4.2,
+   "Reviews": 12,
+   "Size_Kb": 90112.0,
+   "Installs": 500,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2018-02-19",
+   "Current_Ver": "1.2",
+   "Android_Ver": "4.1 and up"
+  },
+  "Dt Tracking": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 4.0,
+   "Reviews": 4,
+   "Size_Kb": 24576.0,
+   "Installs": 100,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2016-10-28",
+   "Current_Ver": "0.2",
+   "Android_Ver": "4.0 and up"
+  },
+  "Mini DV": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 3.5,
+   "Reviews": 12,
+   "Size_Kb": 19456.0,
+   "Installs": 5000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2018-05-29",
+   "Current_Ver": "1.27",
+   "Android_Ver": "4.0 and up"
+  }
+ }
+}

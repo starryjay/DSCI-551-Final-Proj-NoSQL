@@ -1,0 +1,74 @@
+{
+ "AUTO_AND_VEHICLES": {
+  "Repair Hyundai Santa Fe": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 3.9,
+   "Reviews": 22,
+   "Size_Kb": 99328.0,
+   "Installs": 1000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2018-01-31",
+   "Current_Ver": "1",
+   "Android_Ver": "4.0 and up"
+  },
+  "EV Trip Optimizer for Tesla": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 3.2,
+   "Reviews": 46,
+   "Size_Kb": 6758.4,
+   "Installs": 1000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2018-06-26",
+   "Current_Ver": "3.4",
+   "Android_Ver": "4.1 and up"
+  },
+  "EZ-ELD Update": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 3.1,
+   "Reviews": 14,
+   "Size_Kb": 4710.4,
+   "Installs": 1000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2018-02-09",
+   "Current_Ver": "16",
+   "Android_Ver": "4.3 and up"
+  },
+  "Bolt - EV Charging Service": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 3.0,
+   "Reviews": 9,
+   "Size_Kb": 8601.6,
+   "Installs": 100,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2018-03-23",
+   "Current_Ver": "2.2.0",
+   "Android_Ver": "5.0 and up"
+  },
+  "EZ-ELD Driver App (Free)": {
+   "Category": "AUTO_AND_VEHICLES",
+   "Rating": 2.1,
+   "Reviews": 83,
+   "Size_Kb": 4915.2,
+   "Installs": 5000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Auto & Vehicles",
+   "Last_Updated": "2018-07-29",
+   "Current_Ver": "1.0.12",
+   "Android_Ver": "4.3 and up"
+  }
+ }
+}

@@ -1,10 +1,11 @@
 import json
 import pandas as pd
-import numpy as np
 import os
 import warnings
 from printoutput import find_directory
 from datetime import date
+from operator import getitem, itemgetter
+from collections import OrderedDict
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # [docname, NODES, nodes, TOTALNUM/SUM/MEAN/MIN/MAX, node, 
@@ -28,43 +29,54 @@ def fetch(user_query_list):
     uqlupper = list(map(str.upper, user_query_list))
     if "BUNCH" in uqlupper and (not set(agglist).isdisjoint(set(uqlupper))):
         if type(doc) != dict:
-            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
-                doc = json.load(docread)
+            doc = json.loads(doc)
         doc = bunch_agg(user_query_list, doc)
-    elif "BUNCH" in uqlupper:
+    elif "BUNCH" in uqlupper and (set(agglist).isdisjoint(set(uqlupper))):
         if type(doc) != dict:
-            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
-                doc = json.load(docread)
+            doc = json.loads(doc)
         doc = bunch(user_query_list, doc)
     elif (not set(agglist).isdisjoint(set(uqlupper))):
         if type(doc) != dict:
-            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
-                doc = json.load(docread)
+            doc = json.loads(doc)
         doc = agg_functions(user_query_list, doc)
-        if type(doc) == str:
-            return
     if "SORT" in uqlupper:
+        if "ASC" not in uqlupper and "DESC" not in uqlupper:
+            print("Please specify direction to sort as ASC or DESC!")
+            return
         if type(doc) != dict:
-            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
-                doc = json.load(docread)
+            doc = json.loads(doc)
         doc = sort(user_query_list)
     elif "MERGE" in uqlupper:
+        if type(doc) != dict:
+            doc = json.loads(doc)
         doc = merge(user_query_list)
     if "HAS" in uqlupper:
+        if type(doc) != dict:
+            doc = json.loads(doc)
         doc = has(user_query_list)
     if "NODES" in uqlupper:
-        nodes_list = get_columns(user_query_list)
         if type(doc) != dict:
-            with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
-                doc = json.load(docread)
+            doc = json.loads(doc)
+        nodes_list = get_columns(user_query_list)
         newdoc = {}
-        for k, v in doc.items():
-            for k2, v2 in v.items():
-                if k2 in nodes_list and k not in newdoc.keys():
-                    newdoc[k] = {k2: v2}
-                elif k2 in nodes_list:
-                    newdoc[k]
-                    newdoc[k][k2] = v2
+        if "BUNCH" in uqlupper:
+            for k, v in doc.items():
+                for k1, v1 in v.items():
+                    for k2, v2 in v1.items():
+                        if k2 in nodes_list and k not in newdoc.keys():
+                            newdoc[k] = {k1: v1}
+                            newdoc[k][k1] = {k2: v2}
+                        elif k2 in nodes_list:
+                            newdoc[k][k1] = v1
+                            newdoc[k][k1][k2] = v2
+        else:
+            for k, v in doc.items():
+                for k2, v2 in v.items():
+                    if k2 in nodes_list and k not in newdoc.keys():
+                        newdoc[k] = {k2: v2}
+                    elif k2 in nodes_list:
+                        newdoc[k]
+                        newdoc[k][k2] = v2
         newdoc = json.dumps(newdoc, indent=1)
         print(newdoc)
         return
@@ -225,7 +237,6 @@ def totalnum(user_query_list, doc):
         with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_totalnum.json") as docread:
             doc = json.load(docread)
     return doc
-
 
 def mean(user_query_list, doc):
     uqlupper = list(map(str.upper, user_query_list))
@@ -408,21 +419,23 @@ def bunch_agg(user_query_list, doc):
     else:
         chunk_path = "./" + user_query_list[0] + "_chunks"
         for chunk in os.listdir(chunk_path):
-            with open(chunk_path+"/"+chunk) as curr_chunk:
-                curr_doc = json.load(curr_chunk)
-            for app in curr_doc.values():
-                if app[bunchkey] not in unique_bunchkey_list:
-                    unique_bunchkey_list.append(app[bunchkey])
+            if (os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != "."):
+                with open(chunk_path+"/"+chunk, "r") as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for app in curr_doc.values():
+                    if app[bunchkey] not in unique_bunchkey_list:
+                        unique_bunchkey_list.append(app[bunchkey])
         bunched_dict = {key: {} for key in unique_bunchkey_list}
         for chunk in os.listdir(chunk_path):
-            with open(chunk_path+"/"+chunk) as curr_chunk:
-                curr_doc = json.load(curr_chunk)
-            for appname, appdata in curr_doc.items():
-                bunched_dict[appdata[bunchkey]][appname] = appdata
-            bunched = json.dumps(bunched_dict, indent=1)
-            with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch.json", "w") as outfile:
-                outfile.write(bunched)
-            bunched_dict = {key: {} for key in unique_bunchkey_list}
+            if (os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".") :
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for appname, appdata in curr_doc.items():
+                    bunched_dict[appdata[bunchkey]][appname] = appdata
+                bunched = json.dumps(bunched_dict, indent=1)
+                with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch.json", "w") as outfile:
+                    outfile.write(bunched)
+                bunched_dict = {key: {} for key in unique_bunchkey_list}
         if "SUM" in list(map(str.upper, user_query_list)):
             sumcol = user_query_list[uqlupper.index("SUM") + 1]
             sumkey = 'sum_' + sumcol
@@ -430,25 +443,36 @@ def bunch_agg(user_query_list, doc):
                 print("Node to aggregate must be selected in NODES")
                 return
             sumdict = {key: 0 for key in unique_bunchkey_list}
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                nodesum = 0 
-                for k, v in curr_dict.items(): 
-                    for k1, v2 in v.items(): 
-                        if k1 == sumcol:
-                            nodesum += v2
-                    sumdict[k] += nodesum
-                    nodesum = 0
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                for group, app in curr_dict.items():
-                    for appname, appdata in app.items(): 
-                        appdata[sumkey] = sumdict[group]
-                curr_dict = json.dumps(curr_dict, indent=1)
-                with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
-                    outfile.write(curr_dict)
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
+                    nodesum = 0 
+                    for k, v in curr_dict.items(): 
+                        for k1, v1 in v.items(): 
+                            for k2, v2 in v1.items():
+                                if sumcol == k2:
+                                    nodesum += v2
+                        if isinstance(unique_bunchkey_list[0], int):
+                            k = int(k)
+                        elif isinstance(unique_bunchkey_list[0], float):
+                            k = float(k)
+                        sumdict[k] += nodesum
+                        nodesum = 0
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
+                    for group, app in curr_dict.items():
+                        for appname, appdata in app.items():
+                            if isinstance(unique_bunchkey_list[0], int):
+                                group = int(group)
+                            elif isinstance(unique_bunchkey_list[0], float):
+                                group = float(group)
+                            appdata[sumkey] = sumdict[group]
+                    curr_dict = json.dumps(curr_dict, indent=1)
+                    with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
+                        outfile.write(curr_dict)
             return curr_dict
         elif "TOTALNUM" in list(map(str.upper, user_query_list)):
             totalcol = user_query_list[uqlupper.index("TOTALNUM") + 1]
@@ -457,25 +481,36 @@ def bunch_agg(user_query_list, doc):
                 print("Node to aggregate must be selected in NODES")
                 return
             totaldict = {key: 0 for key in unique_bunchkey_list}
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                nodecount = 0 
-                for k, v in curr_dict.items(): 
-                    for k1, v2 in v.items(): 
-                        if k1 == totalcol:
-                            nodecount += 1
-                    totaldict[k] += nodecount
-                    nodecount = 0
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                for group, app in curr_dict.items():
-                    for appname, appdata in app.items(): 
-                        appdata[totalkey] = totaldict[group]
-                curr_dict = json.dumps(curr_dict, indent=1)
-                with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
-                    outfile.write(curr_dict)
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
+                    nodecount = 0 
+                    for k, v in curr_dict.items(): 
+                        for k1, v1 in v.items(): 
+                            for k2, v2 in v1.items():
+                                if k2 == totalcol:
+                                    nodecount += 1
+                        if isinstance(unique_bunchkey_list[0], int):
+                            k = int(k)
+                        elif isinstance(unique_bunchkey_list[0], float):
+                            k = float(k)
+                        totaldict[k] += nodecount
+                        nodecount = 0
+            for filename in os.listdir(bunch_agg_chunk_path): 
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
+                    for group, app in curr_dict.items():
+                        for appname, appdata in app.items(): 
+                            if isinstance(unique_bunchkey_list[0], int):
+                                group = int(group)
+                            elif isinstance(unique_bunchkey_list[0], float):
+                                group = float(group)
+                            appdata[totalkey] = totaldict[group]
+                    curr_dict = json.dumps(curr_dict, indent=1)
+                    with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
+                        outfile.write(curr_dict)
             return curr_dict
         elif "MEAN" in list(map(str.upper, user_query_list)):
             meancol = user_query_list[uqlupper.index("MEAN") + 1]
@@ -484,28 +519,39 @@ def bunch_agg(user_query_list, doc):
                 print("Node to aggregate must be selected in NODES")
                 return
             meandict = {key: 0 for key in unique_bunchkey_list}
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                nodesum = 0 
-                nodecount = 0
-                for k, v in curr_dict.items(): 
-                    for k1, v2 in v.items(): 
-                        if k1 == meancol:
-                            nodesum += v2
-                            nodecount += 1
-                    meandict[k] += nodesum/nodecount
-                    nodesum = 0
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
+                    nodesum = 0 
                     nodecount = 0
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                for group, app in curr_dict.items():
-                    for appname, appdata in app.items(): 
-                        appdata[meankey] = meandict[group]
-                curr_dict = json.dumps(curr_dict, indent=1)
-                with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
-                    outfile.write(curr_dict)
+                    for k, v in curr_dict.items(): 
+                        for k1, v1 in v.items(): 
+                            for k2, v2 in v1.items():
+                                if k2 == meancol:
+                                    nodesum += v2
+                                    nodecount += 1
+                        if isinstance(unique_bunchkey_list[0], int):
+                            k = int(k)
+                        elif isinstance(unique_bunchkey_list[0], float):
+                            k = float(k)
+                        meandict[k] += nodesum/nodecount
+                        nodesum = 0
+                        nodecount = 0
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
+                    for group, app in curr_dict.items():
+                        for appname, appdata in app.items(): 
+                            if isinstance(unique_bunchkey_list[0], int):
+                                group = int(group)
+                            elif isinstance(unique_bunchkey_list[0], float):
+                                group = float(group)
+                            appdata[meankey] = meandict[group]
+                    curr_dict = json.dumps(curr_dict, indent=1)
+                    with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
+                        outfile.write(curr_dict)
             return curr_dict
         elif "MIN" in list(map(str.upper, user_query_list)):
             mincol = user_query_list[uqlupper.index("MIN") + 1]
@@ -514,24 +560,36 @@ def bunch_agg(user_query_list, doc):
                 print("Node to aggregate must be selected in NODES")
                 return
             mindict = {key: 0 for key in unique_bunchkey_list}
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                nodemin = float("inf")
-                for k, v in curr_dict.items(): 
-                    for k1, v2 in v.items(): 
-                        if k1 == mincol and v2 < nodemin:
-                            nodemin = v2
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
                     nodemin = float("inf")
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                for group, app in curr_dict.items():
-                    for appname, appdata in app.items(): 
-                        appdata[minkey] = mindict[group]
-                curr_dict = json.dumps(curr_dict, indent=1)
-                with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
-                    outfile.write(curr_dict)
+                    for k, v in curr_dict.items(): 
+                        for k1, v1 in v.items(): 
+                            for k2, v2 in v1.items():
+                                if k2 == mincol and v2 < nodemin:
+                                    nodemin = v2
+                        if isinstance(unique_bunchkey_list[0], int):
+                            k = int(k)
+                        elif isinstance(unique_bunchkey_list[0], float):
+                            k = float(k)
+                        mindict[k] = nodemin
+                        nodemin = float("inf")
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
+                    for group, app in curr_dict.items():
+                        for appname, appdata in app.items(): 
+                            if isinstance(unique_bunchkey_list[0], int):
+                                group = int(group)
+                            elif isinstance(unique_bunchkey_list[0], float):
+                                group = float(group)
+                            appdata[minkey] = mindict[group]
+                    curr_dict = json.dumps(curr_dict, indent=1)
+                    with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
+                        outfile.write(curr_dict)
             return curr_dict
         elif "MAX" in list(map(str.upper, user_query_list)):
             maxcol = user_query_list[uqlupper.index("MAX") + 1]
@@ -540,24 +598,36 @@ def bunch_agg(user_query_list, doc):
                 print("Node to aggregate must be selected in NODES")
                 return
             maxdict = {key: 0 for key in unique_bunchkey_list}
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                nodemax = float("-inf")
-                for k, v in curr_dict.items(): 
-                    for k1, v2 in v.items(): 
-                        if k1 == maxcol and v2 > nodemax:
-                            nodemax = v2
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
                     nodemax = float("-inf")
-            for filename in os.listdir(bunch_agg_chunk_path) and filename.endswith("_bunch.json"):
-                with open(bunch_agg_chunk_path + "/" + filename) as infile:
-                    curr_dict = json.load(infile)
-                for group, app in curr_dict.items():
-                    for appname, appdata in app.items(): 
-                        appdata[maxkey] = maxdict[group]
-                curr_dict = json.dumps(curr_dict, indent=1)
-                with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
-                    outfile.write(curr_dict)
+                    for k, v in curr_dict.items(): 
+                        for k1, v1 in v.items(): 
+                            for k2, v2 in v1.items():
+                                if k2 == maxcol and v2 > nodemax:
+                                    nodemax = v2
+                        if isinstance(unique_bunchkey_list[0], int):
+                            k = int(k)
+                        elif isinstance(unique_bunchkey_list[0], float):
+                            k = float(k)
+                        maxdict[k] = nodemax
+                        nodemax = float("-inf")
+            for filename in os.listdir(bunch_agg_chunk_path):
+                if filename.endswith("_bunch.json"):
+                    with open(bunch_agg_chunk_path + "/" + filename) as infile:
+                        curr_dict = json.load(infile)
+                    for group, app in curr_dict.items():
+                        for appname, appdata in app.items(): 
+                            if isinstance(unique_bunchkey_list[0], int):
+                                group = int(group)
+                            elif isinstance(unique_bunchkey_list[0], float):
+                                group = float(group)
+                            appdata[maxkey] = maxdict[group]
+                    curr_dict = json.dumps(curr_dict, indent=1)
+                    with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
+                        outfile.write(curr_dict)
             return curr_dict
 
 def bunch(user_query_list, doc):
@@ -578,28 +648,35 @@ def bunch(user_query_list, doc):
     else:
         chunk_path = "./" + user_query_list[0] + "_chunks"
         for chunk in os.listdir(chunk_path):
-            with open(chunk_path+"/"+chunk) as curr_chunk:
-                curr_doc = json.load(curr_chunk)
-            for app in curr_doc.values():
-                if app[bunchkey] not in unique_bunchkey_list:
-                    unique_bunchkey_list.append(app[bunchkey])
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for app in curr_doc.values():
+                    if app[bunchkey] not in unique_bunchkey_list:
+                        unique_bunchkey_list.append(app[bunchkey])
         bunched_dict = {key: {} for key in unique_bunchkey_list}
         for chunk in os.listdir(chunk_path):
-            with open(chunk_path+"/"+chunk) as curr_chunk:
-                curr_doc = json.load(curr_chunk)
-            for appname, appdata in curr_doc.items():
-                bunched_dict[appdata[bunchkey]][appname] = appdata
-            bunched = json.dumps(bunched_dict, indent=1)
-            with open(bunched_chunk_path + "/" + chunk[:-5] + "_bunch.json", "w") as outfile:
-                outfile.write(bunched)
-            bunched_dict = {key: {} for key in unique_bunchkey_list}
-        with open(bunched_chunk_path + "/" + user_query_list[0] + "_chunk1" + "_bunch.json") as docread:
-            doc = json.load(docread)
+            if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
+                with open(chunk_path+"/"+chunk) as curr_chunk:
+                    curr_doc = json.load(curr_chunk)
+                for appname, appdata in curr_doc.items():
+                    bunched_dict[appdata[bunchkey]][appname] = appdata
+                bunched = json.dumps(bunched_dict, indent=1)
+                with open(bunched_chunk_path + "/" + chunk[:-5] + "_bunch.json", "w") as outfile:
+                    outfile.write(bunched)
+                bunched_dict = {key: {} for key in unique_bunchkey_list}
+    with open(bunched_chunk_path + "/" + user_query_list[0] + "_chunk1" + "_bunch.json") as docread:
+        doc = json.load(docread)
     return doc
 
 def merge(user_query_list):
-    sortcol = user_query_list[list(map(str.upper, user_query_list)).index("INCOMMON") + 1]
-    final_doc = sort_merge(user_query_list, sortcol)
+    uqlupper = list(map(str.upper, user_query_list))
+    if "DESC" not in uqlupper:
+        direction = "ASC"
+    elif "DESC" in uqlupper:
+        direction = "DESC"
+    sortcol = user_query_list[uqlupper.index("INCOMMON") + 1]
+    final_doc = sort_merge(user_query_list, sortcol, direction)
     return final_doc
     
 def sort(user_query_list):
@@ -615,29 +692,39 @@ def sort(user_query_list):
         print("Please specify direction to sort by as ASC or DESC!")
         return
     if "BUNCH" in uqlupper:
-        sorted_dict = sort_bunch(user_query_list, sortnode)
+        sorted_dict = sort_bunch(user_query_list, sortnode, direction)
     if "MERGE" in uqlupper:
         common_node = user_query_list[uqlupper.index("INCOMMON") + 1]
         sorted_dict = sort_merge(user_query_list, common_node)
     elif "BUNCH" not in uqlupper and "MERGE" not in uqlupper:
+        user_query_list.insert(0, 'FETCH')
         directory = find_directory(user_query_list)
+        user_query_list = user_query_list[1:]
         directory = sort_within_chunks(user_query_list, sortnode, directory)
         sorted_dict = sort_between_chunks(user_query_list, sortnode, directory)
-    if direction == "ASC":
-        return sorted_dict
-    elif direction == "DESC":
-        return dict(list(sorted_dict).reverse())
+    return sorted_dict
 
-def simple_sort(sortcol, doc):
-    doc_list = [[k, v] for k, v in doc]
-    sorted_doc = merge_sort(doc_list, sortcol)
+def simple_sort(doc, sortcol, direction, user_query_list=None):
+    if isinstance(doc, str):
+        doc = json.loads(doc)
+    if not user_query_list:
+        if direction == "ASC":
+            sorted_doc = dict(sorted(doc.items(), key=lambda x: getitem(x[1], sortcol)))
+        elif direction == "DESC":
+            sorted_doc = dict(sorted(doc.items(), key=lambda x: getitem(x[1], sortcol)))
+    elif "BUNCH" in list(map(str.upper, user_query_list)):
+        if direction == "ASC":
+            sorted_doc = {key: dict(sorted(values.items(), key=lambda x: x[1][sortcol])) for key, values in doc.items()}
+        elif direction == "DESC":
+            sorted_doc = {key: dict(sorted(values.items(), key=lambda x: x[1][sortcol], reverse=True)) for key, values in doc.items()}
     return sorted_doc
 
-def sort_bunch(user_query_list, sortcol):
+def sort_bunch(user_query_list, sortcol, direction):
     uqlupper = list(map(str.upper, user_query_list))
     agglist = ["TOTALNUM", "SUM", "MEAN", "MIN", "MAX"]
     agg_present = not set(agglist).isdisjoint(set(uqlupper))
-    which_agg = tuple(set(agglist).intersection(set(uqlupper)))[0]
+    if agg_present:
+        which_agg = tuple(set(agglist).intersection(set(uqlupper)))[0]
     bunchcol = user_query_list[uqlupper.index("BUNCH") + 1] + "_bunched"
     if agg_present:
         file_path = os.path.join("./"+ user_query_list[0] + "_chunks", "bunch_agg_chunks")
@@ -645,7 +732,7 @@ def sort_bunch(user_query_list, sortcol):
         file_path = os.path.join("./"+ user_query_list[0] + "_chunks", "bunched_chunks")
     sorted_chunk_directory = "./"+ user_query_list[0] + "_chunks/sorted_chunks"
     for chunk in os.listdir(file_path):
-        if os.path.isfile(file_path + "/" + chunk) and agg_present and chunk[0] != "." and chunk.endswith(which_agg.lower() + ".json"):      # CHANGE THIS IN RELATIONAL
+        if os.path.isfile(file_path + "/" + chunk) and agg_present and chunk[0] != "." and chunk.endswith(which_agg.lower() + ".json"):
             with open(file_path + "/" + chunk) as docread:
                 doc = json.load(docread)
             doc_keys = list(doc.keys())
@@ -661,30 +748,30 @@ def sort_bunch(user_query_list, sortcol):
                 doc_num = 1
                 for key in doc_keys:
                     newdoc = doc[key]
-                    newdoc = merge_sort([[k, v] for k, v in newdoc], sortcol) # Check if this is correct
-                    newdoc = json.dumps(newdoc, indent=1)
-                    with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_level_" + str(doc_num) + ".json") as outfile:
-                        outfile.write(newdoc)
-                    doc_num += 1
-        elif os.path.isfile(file_path + "/" + chunk) and not agg_present and chunk[0] != "." and chunk.endswith("_bunch.json"):      # ADD THIS IN RELATIONAL
-            with open(file_path + "/" + chunk) as docread:
-                doc = json.load(docread)
-            doc_keys = list(doc.keys())
-            if not os.path.exists(sorted_chunk_directory):
-                os.mkdir(sorted_chunk_directory)
-            if bunchcol[:-8] == sortcol:
-                doc_keys.sort()
-                sorted_doc = {i: doc[i] for i in doc_keys}
-                sorted_doc = json.dumps(sorted_doc, indent=1)
-                with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_on_bunch.json", "w") as outfile:
-                    outfile.write(sorted_doc)
-            else:
-                doc_num = 1
-                for key in doc_keys:
-                    newdoc = doc[key]
-                    sorted_doc = merge_sort([[k, v] for k, v in newdoc], sortcol) # Check if this is correct
+                    newdoc = simple_sort(newdoc, sortcol, direction, user_query_list)
                     sorted_doc = json.dumps(newdoc, indent=1)
-                    with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_level_" + str(doc_num) + ".json") as outfile:
+                    with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_level_" + str(doc_num) + ".json", "w") as outfile:
+                        outfile.write(sorted_doc)
+                    doc_num += 1
+        elif os.path.isfile(file_path + "/" + chunk) and not agg_present and chunk[0] != "." and chunk.endswith("_bunch.json"):
+            with open(file_path + "/" + chunk) as docread:
+                doc = json.load(docread)
+            doc_keys = list(doc.keys())
+            if not os.path.exists(sorted_chunk_directory):
+                os.mkdir(sorted_chunk_directory)
+            if bunchcol[:-8] == sortcol:
+                doc_keys.sort()
+                sorted_doc = {i: doc[i] for i in doc_keys}
+                sorted_doc = json.dumps(sorted_doc, indent=1)
+                with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_on_bunch.json", "w") as outfile:
+                    outfile.write(sorted_doc)
+            else:
+                doc_num = 1
+                for key in doc_keys:
+                    newdoc = {key: doc[key]}
+                    newdoc = simple_sort(newdoc, sortcol, direction, user_query_list)
+                    sorted_doc = json.dumps(newdoc, indent=1)
+                    with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_level_" + str(doc_num) + ".json", "w") as outfile:
                         outfile.write(sorted_doc)
                     doc_num += 1
     final_sorted_doc = {}
@@ -703,7 +790,7 @@ def sort_bunch(user_query_list, sortcol):
                     final_sorted_doc[k] = v
     return final_sorted_doc
 
-def sort_merge(user_query_list, sortcol):
+def sort_merge(user_query_list, sortcol, direction):
     doc1 = user_query_list[0]
     doc2 = user_query_list[list(map(str.upper, user_query_list)).index("MERGE") + 1]
     directory1 = "./" + doc1 + "_chunks"
@@ -718,16 +805,16 @@ def sort_merge(user_query_list, sortcol):
         if os.path.isfile(directory1 + "/" + filename) and filename[0] != ".":
             with open(directory1 + "/" + filename) as newread:
                 newdoc = json.load(newread)
-            newdoc = simple_sort(sortcol, newdoc)
+            print('newdoc: ', newdoc)
+            newdoc = simple_sort(newdoc, sortcol, direction)
             newdoc = json.dumps(newdoc, indent=1)
             with open(merged_directory1 + "/" + filename, "w") as outfile:
                 outfile.write(newdoc)
-            newdoc.to_csv(merged_directory1 + "/" + filename)
     for filename in os.listdir(directory2):
         if os.path.isfile(directory2 + "/" + filename) and filename[0] != ".":
             with open(directory2 + "/" + filename) as newread2:
                 newdoc2 = json.load(newread2)
-            newdoc2 = simple_sort(sortcol, newdoc2)
+            newdoc2 = simple_sort(newdoc2, sortcol, direction)
             newdoc2 = json.dumps(newdoc2, indent=1)
             with open(merged_directory2 + "/" + filename, "w") as outfile:
                 outfile.write(newdoc2)
@@ -741,79 +828,78 @@ def sort_merge(user_query_list, sortcol):
                         left = json.load(leftread)
                     with open(directory2 + "/" + right_chunk) as rightread:
                         right = json.load(rightread)
-                    for i1 in range(len(left)):
+                    for i1 in left.keys():
                         appdata1 = left[i1]
                         if appdata1 is None:
                             continue
                         matchval = appdata1[sortcol]
-                        for i2 in range(len(right)):
+                        for i2 in right.keys():
                             appdata2 = right[i2]
                             if appdata2 is None:
                                 continue
                             if appdata2[sortcol] == matchval:
-                                match_dict[count] = {i1: appdata1, i2: appdata2}
+                                if i1 != i2:
+                                    match_dict[count] = {i1: appdata1, i2: appdata2}
+                                else:
+                                    match_dict[count] = {i1 + "_" + doc1: appdata1, i2 + "_" + doc2: appdata2}
                                 count += 1
                                 right[i2] = None
                                 break
                         left[i1] = None
     out = json.dumps(match_dict, indent=1)
-    with open(merged_directory1 + "/" + doc1 + "_merged.csv") as outfile1:
+    with open(merged_directory1 + "/" + doc1 + "_merged.csv", "w") as outfile1:
         outfile1.write(out)
-    with open(merged_directory2 + "/" + doc2 + "_merged.csv") as outfile2:
+    with open(merged_directory2 + "/" + doc2 + "_merged.csv", "w") as outfile2:
         outfile2.write(out)
     return out
 
-def sort_within_chunks(user_query_list, sortcol, directory):
+def sort_within_chunks(user_query_list, sortnode, directory):
+    uqlupper = list(map(str.upper, user_query_list))
     sorted_chunk_directory = directory + "/sorted_chunks"
     if not os.path.exists(sorted_chunk_directory):
         os.mkdir(sorted_chunk_directory)
     for chunk in os.listdir(directory):
-        with open(directory + "/" + chunk) as docread:
-            doc = json.load(docread)
-        doc_keys = list(doc.keys())
-        doc_keys.sort()
-        sorted_doc = {i: doc[i] for i in doc_keys}
-        sorted_doc = json.dumps(sorted_doc, indent=1)
-        with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted.json", "w") as outfile:
-            outfile.write(sorted_doc)
-    return directory + "/sorted_chunks"
+        if os.path.isfile(directory + "/" + chunk) and chunk[0] != ".":
+            with open(directory + "/" + chunk) as docread:
+                doc = json.load(docread)
+                if "ASC" in uqlupper:
+                    res = dict(sorted(doc, key = lambda x: getitem(x[1], sortnode)))
+                elif "DESC" in uqlupper:
+                    res = dict(sorted(doc, key = lambda x: getitem(x[1], sortnode), reverse=True))
+            chunk_dump = json.dumps(res, indent=1)
+            with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted.json", "w") as outfile:
+                outfile.write(chunk_dump)
+    return sorted_chunk_directory
+
+def chunk_dict(chunk_dict, size):
+    keys = list(chunk_dict.keys())
+    for i in range(0, len(keys), size):
+        yield {k: chunk_dict[k] for k in keys[i:(i + size)]}
 
 def sort_between_chunks(user_query_list, sortcol, directory):
     docname = user_query_list[0]
     if not os.path.exists("./" + docname + "_chunks/chunk_subsets"):
         os.mkdir("./" + docname + "_chunks/chunk_subsets")
-    for filename in os.listdir(directory):
+    subset_count = 1
+    for filename in os.listdir(directory): 
         if os.path.isfile(directory + "/" + filename) and filename[0] != ".":
-            with open(directory + "/" + filename) as fileread:
-                file_subset = json.load(fileread)
-            file_subset_name = f"{filename.split('.')[0]}_subset.json"
-            file_subset_path = os.path.join("./"+ docname + "_chunks/chunk_subsets", file_subset_name)
-            out = json.dumps(file_subset)
-            with open(file_subset_path, "w") as outfile:
-                outfile.write(out)
+            file_to_subset = pd.read_json(directory + "/" + filename, orient='index')
+            for file_subset in chunk_dict(file_to_subset, len(file_to_subset)):
+                file_subset_name = f"{filename.split('.')[0]}_subset{subset_count}.json"
+                file_subset_path = "./"+ docname + "_chunks/chunk_subsets/" + file_subset_name
+                file_subset = json.dumps(file_subset, indent=1)
+                with open(file_subset_path, "w") as subset_write:
+                    subset_write.write(file_subset)
+                subset_count += 1
     subset_files = os.listdir("./"+ docname + "_chunks/chunk_subsets")
     while len(subset_files) > 1:
-        with open("./"+ docname + "_chunks/chunk_subsets" + subset_files.pop(0)) as chunk1read:
-            chunk1 = json.load(chunk1read)
-        with open("./"+ docname + "_chunks/chunk_subsets" + subset_files.pop(0)) as chunk2read:
-            chunk2 = json.load(chunk2read)
-        sorted_merged = merge_asc(chunk1.values.tolist(), chunk2.values.tolist(), sortcol)
-        sorted_merged = json.dumps(sorted_merged, indent=1)
-        with open("./"+ docname + "_chunks/chunk_subsets", f"merged_subset_{len(subset_files) + 1 }.json") as outfile:
-            outfile.write(sorted_merged)
+        chunk1 = pd.read_json(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files.pop(0)), orient='index') #get the first file 
+        chunk2 = pd.read_json(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files.pop(0)), orient='index') #second file 
+        pd.DataFrame(merge_asc(chunk1.values.tolist(), chunk2.values.tolist(), sortcol)).to_json(os.path.join("./"+ docname + "_chunks/chunk_subsets", f"merged_subset_{len(subset_files) + 1 }.json"), orient='index', indent=1)
         subset_files.append(f"merged_subset_{len(subset_files) + 1 }.json")
-    with open(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files[0])) as finalread:
-        final_merged_doc = json.load(finalread)
-    return final_merged_doc
-
-def merge_sort(doc_list, sortcol): 
-    if len(doc_list) == 1:
-        return doc_list
-    mid = len(doc_list)//2
-    left = merge_sort(doc_list[:mid], sortcol)
-    right = merge_sort(doc_list[mid:], sortcol)
-    sorted_doc = merge_asc(left, right, sortcol)
-    return sorted_doc
+    with open("./"+ docname + "_chunks/chunk_subsets/" + subset_files[0]) as outfile:
+        final_merged_json = json.load(outfile)
+    return final_merged_json
 
 def merge_asc(left, right, sortcol): 
     sorted_doc = []
@@ -832,7 +918,6 @@ def merge_asc(left, right, sortcol):
     while j < len(right): 
         sorted_doc.append(right[j])
         j = j + 1
-    sorted_doc = {i[0]: i[1] for i in sorted_doc}
     return sorted_doc
 
 def has(user_query_list):

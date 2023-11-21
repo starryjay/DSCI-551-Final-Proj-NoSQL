@@ -1,0 +1,18 @@
+{
+ "LIBRARIES_AND_DEMO": {
+  "db.Mobil App": {
+   "Category": "LIBRARIES_AND_DEMO",
+   "Rating": 4.5,
+   "Reviews": 23,
+   "Size_Kb": 31744.0,
+   "Installs": 5000,
+   "Type": "Free",
+   "Price": 0.0,
+   "Content_Rating": "Everyone",
+   "Genres": "Libraries & Demo",
+   "Last_Updated": "2018-07-11",
+   "Current_Ver": "3.4.5",
+   "Android_Ver": "3.0 and up"
+  }
+ }
+}
