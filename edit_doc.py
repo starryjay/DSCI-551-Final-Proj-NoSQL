@@ -38,7 +38,7 @@ def insert(user_query_list):
         if os.listdir(chunk_path):
             chunknolist = []
             for chunk in os.listdir(chunk_path):
-                if os.path.isfile(chunk_path + "/" + chunk):
+                if os.path.isfile(chunk_path + "/" + chunk) and chunk[0] != ".":
                     chunkno = ""
                     for c in chunk: 
                         if c.isdigit(): 
@@ -140,6 +140,7 @@ def update(user_query_list):
                     out_chunk = json.dumps(curr_chunk, indent=1)
                     with open(chunk_path + "/" + chunk, "w") as outfile:
                         outfile.write(out_chunk)
+    print("Successfully updated nodename", nodename, "with new data", mods)
 
 def delete(user_query_list):
     nodename = user_query_list[2].split("=")[1]
@@ -155,4 +156,4 @@ def delete(user_query_list):
                     with open(chunk_path + "/" + chunk, "w") as outfile:
                         outfile.write(out_chunk)
                     break
-        print("deleted node", nodename)
+        print("Deleted node", nodename)

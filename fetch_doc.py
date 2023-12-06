@@ -1,16 +1,13 @@
 import json
-import pandas as pd
 import os
+import shutil
 import warnings
-from printoutput import find_directory
 from datetime import date
-from operator import getitem, itemgetter
-from collections import OrderedDict
+from operator import getitem
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # [docname, NODES, nodes, TOTALNUM/SUM/MEAN/MIN/MAX, node, 
 # BUNCH, node, SORT, node, ASC/DESC, MERGE, docname2, HAS, conditions]
-
 
 # Check for bunch/agg, pass into bunch_agg()   
 # Else check for bunch or agg individually, pass into bunch() or agg_functions()
@@ -20,6 +17,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # Filter columns with get_columns()
 # Locate most updated directory and print final doc
 
+# fetch gps_test nodes Category Rating sort Rating ASC
 
 def fetch(user_query_list):
     with open("./" + user_query_list[0] + "_chunks/" + user_query_list[0] + "_chunk1.json", "r") as docread:
@@ -59,15 +57,16 @@ def fetch(user_query_list):
             doc = json.loads(doc)
         nodes_list = get_columns(user_query_list)
         newdoc = {}
-        if "BUNCH" in uqlupper:
+        if "BUNCH" in uqlupper or "MERGE" in uqlupper:
             for k, v in doc.items():
                 for k1, v1 in v.items():
                     for k2, v2 in v1.items():
                         if k2 in nodes_list and k not in newdoc.keys():
-                            newdoc[k] = {k1: v1}
-                            newdoc[k][k1] = {k2: v2}
+                            newdoc[k] = {k1: {}}
+                            newdoc[k][k1][k2] = v2
                         elif k2 in nodes_list:
-                            newdoc[k][k1] = v1
+                            if k1 not in newdoc[k]:
+                                newdoc[k][k1] = {}
                             newdoc[k][k1][k2] = v2
         else:
             for k, v in doc.items():
@@ -77,10 +76,15 @@ def fetch(user_query_list):
                     elif k2 in nodes_list:
                         newdoc[k]
                         newdoc[k][k2] = v2
-        newdoc = json.dumps(newdoc, indent=1)
-        print(newdoc)
-        return
+        if type(doc) != str:
+            doc = json.dumps(newdoc, indent=1)
+    else:
+        if type(doc) != str:
+            doc = json.dumps(doc, indent=1)
     print(doc)
+    for fn in os.listdir("./" + user_query_list[0] + "_chunks"):
+        if os.path.isdir("./" + user_query_list[0] + "_chunks/" + fn):
+            shutil.rmtree("./" + user_query_list[0] + "_chunks/" + fn)
 
 def get_columns(user_query_list):
     uqlupper = list(map(str.upper, user_query_list))
@@ -163,7 +167,7 @@ def docsum(user_query_list, doc):
                 continue
         with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_sum.json") as docread:
             doc = json.load(docread)
-    elif key in get_columns(user_query_list):
+    else:
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
@@ -185,6 +189,8 @@ def docsum(user_query_list, doc):
                     outfile.write(outdoc)
         with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_sum.json") as docread:
             doc = json.load(docread)
+    if "MERGE" in uqlupper:
+        print("total sum of", key, ":", total_sum)
     return doc 
 
 def totalnum(user_query_list, doc):
@@ -214,7 +220,7 @@ def totalnum(user_query_list, doc):
                     outfile.write(outdoc)
         with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_totalnum.json") as docread:
             doc = json.load(docread)
-    elif key in get_columns(user_query_list):
+    else:
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
@@ -236,6 +242,8 @@ def totalnum(user_query_list, doc):
                     outfile.write(outdoc)
         with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_totalnum.json") as docread:
             doc = json.load(docread)
+    if "MERGE" in uqlupper:
+        print("total count of", key, ":", total)
     return doc
 
 def mean(user_query_list, doc):
@@ -271,7 +279,7 @@ def mean(user_query_list, doc):
                     outfile.write(outdoc)
         with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_mean.json") as docread:
             doc = json.load(docread)
-    elif key in get_columns(user_query_list):
+    else:
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
@@ -323,7 +331,7 @@ def docmin(user_query_list, doc):
                     outfile.write(outdoc)
         with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_min.json") as docread:
             doc = json.load(docread)
-    elif key in get_columns(user_query_list):
+    else:
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
@@ -345,6 +353,8 @@ def docmin(user_query_list, doc):
                     outfile.write(outdoc)
         with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_min.json") as docread:
             doc = json.load(docread)
+    if "MERGE" in uqlupper:
+        print("min of", key, ":", curr_min)
     return doc
 
 def docmax(user_query_list, doc):
@@ -374,7 +384,7 @@ def docmax(user_query_list, doc):
                     outfile.write(outdoc)
         with open(chunk_path + "/col_agg/" + user_query_list[0] + "_chunk1_col_max.json") as docread:
             doc = json.load(docread)
-    elif key in get_columns(user_query_list):
+    else:
         chunk_path = "./" + user_query_list[0] + "_chunks"
         if not os.path.exists(chunk_path + "/agg"):
             os.mkdir(chunk_path + "/agg")
@@ -396,7 +406,17 @@ def docmax(user_query_list, doc):
                     outfile.write(outdoc)
         with open(chunk_path + "/agg/" + user_query_list[0] + "_chunk1_max.json") as docread:
             doc = json.load(docread)
+    if "MERGE" in uqlupper:
+        print("max of", key, ":", curr_max)
     return doc
+
+def concat_dict(left, right):
+    for k in right.keys():
+        if k in left and isinstance(left[k], dict) and isinstance(right[k], dict):  #noqa
+            concat_dict(left[k], right[k])
+        else:
+            left[k] = right[k]
+    return left
 
 def bunch_agg(user_query_list, doc):
     uqlupper = list(map(str.upper, user_query_list))
@@ -412,8 +432,7 @@ def bunch_agg(user_query_list, doc):
         bunch_agg_chunk_path=os.path.join("./" + user_query_list[0] + "_chunks", "bunch_agg_chunks")
         if not os.path.exists(bunch_agg_chunk_path):
             os.mkdir(bunch_agg_chunk_path)
-    keys_list = get_columns(user_query_list)
-    if bunchkey.upper() not in list(map(str.upper, keys_list)):
+    if bunchkey.upper() not in list(map(str.upper, nodes_list)):
         print("Node to bunch must be selected in NODES")
         return
     else:
@@ -437,6 +456,7 @@ def bunch_agg(user_query_list, doc):
                     outfile.write(bunched)
                 bunched_dict = {key: {} for key in unique_bunchkey_list}
         if "SUM" in list(map(str.upper, user_query_list)):
+            final_dict = {}
             sumcol = user_query_list[uqlupper.index("SUM") + 1]
             sumkey = 'sum_' + sumcol
             if sumcol.upper() not in list(map(str.upper, nodes_list)):
@@ -470,11 +490,12 @@ def bunch_agg(user_query_list, doc):
                             elif isinstance(unique_bunchkey_list[0], float):
                                 group = float(group)
                             appdata[sumkey] = sumdict[group]
+                    final_dict = concat_dict(final_dict, curr_dict)
                     curr_dict = json.dumps(curr_dict, indent=1)
                     with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
                         outfile.write(curr_dict)
-            return curr_dict
         elif "TOTALNUM" in list(map(str.upper, user_query_list)):
+            final_dict = {}
             totalcol = user_query_list[uqlupper.index("TOTALNUM") + 1]
             totalkey = 'totalnum_' + totalcol
             if totalcol.upper() not in list(map(str.upper, nodes_list)):
@@ -508,11 +529,12 @@ def bunch_agg(user_query_list, doc):
                             elif isinstance(unique_bunchkey_list[0], float):
                                 group = float(group)
                             appdata[totalkey] = totaldict[group]
+                    final_dict = concat_dict(final_dict, curr_dict)
                     curr_dict = json.dumps(curr_dict, indent=1)
                     with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
                         outfile.write(curr_dict)
-            return curr_dict
         elif "MEAN" in list(map(str.upper, user_query_list)):
+            final_dict = {}
             meancol = user_query_list[uqlupper.index("MEAN") + 1]
             meankey = 'mean_' + meancol
             if meancol.upper() not in list(map(str.upper, nodes_list)):
@@ -531,11 +553,10 @@ def bunch_agg(user_query_list, doc):
                                 if k2 == meancol:
                                     nodesum += v2
                                     nodecount += 1
-                        if isinstance(unique_bunchkey_list[0], int):
-                            k = int(k)
-                        elif isinstance(unique_bunchkey_list[0], float):
-                            k = float(k)
-                        meandict[k] += nodesum/nodecount
+                                else:
+                                    continue
+                        if nodecount > 0:
+                            meandict[k] = nodesum/nodecount
                         nodesum = 0
                         nodecount = 0
             for filename in os.listdir(bunch_agg_chunk_path):
@@ -549,11 +570,12 @@ def bunch_agg(user_query_list, doc):
                             elif isinstance(unique_bunchkey_list[0], float):
                                 group = float(group)
                             appdata[meankey] = meandict[group]
+                    final_dict = concat_dict(final_dict, curr_dict)
                     curr_dict = json.dumps(curr_dict, indent=1)
                     with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
                         outfile.write(curr_dict)
-            return curr_dict
         elif "MIN" in list(map(str.upper, user_query_list)):
+            final_dict = {}
             mincol = user_query_list[uqlupper.index("MIN") + 1]
             minkey = 'min_' + mincol
             if mincol.upper() not in list(map(str.upper, nodes_list)):
@@ -587,11 +609,12 @@ def bunch_agg(user_query_list, doc):
                             elif isinstance(unique_bunchkey_list[0], float):
                                 group = float(group)
                             appdata[minkey] = mindict[group]
+                    final_dict = concat_dict(final_dict, curr_dict)
                     curr_dict = json.dumps(curr_dict, indent=1)
                     with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
                         outfile.write(curr_dict)
-            return curr_dict
         elif "MAX" in list(map(str.upper, user_query_list)):
+            final_dict = {}
             maxcol = user_query_list[uqlupper.index("MAX") + 1]
             maxkey = 'max_' + maxcol
             if maxcol.upper() not in list(map(str.upper, nodes_list)):
@@ -625,12 +648,17 @@ def bunch_agg(user_query_list, doc):
                             elif isinstance(unique_bunchkey_list[0], float):
                                 group = float(group)
                             appdata[maxkey] = maxdict[group]
+                    final_dict = concat_dict(final_dict, curr_dict)
                     curr_dict = json.dumps(curr_dict, indent=1)
                     with open(bunch_agg_chunk_path + "/" + chunk[:-5] + "_bunch_" + agg_func + ".json", "w") as outfile:
                         outfile.write(curr_dict)
-            return curr_dict
+        for filename in os.listdir(bunch_agg_chunk_path):
+            if filename.endswith("_bunch.json"):
+                os.remove(bunch_agg_chunk_path + "/" + filename)
+        return final_dict
 
 def bunch(user_query_list, doc):
+    final_dict = {}
     bunchidx = list(map(str.upper, user_query_list)).index("BUNCH") + 1
     bunchkey = user_query_list[bunchidx]
     unique_bunchkey_list = []
@@ -661,12 +689,12 @@ def bunch(user_query_list, doc):
                     curr_doc = json.load(curr_chunk)
                 for appname, appdata in curr_doc.items():
                     bunched_dict[appdata[bunchkey]][appname] = appdata
+                final_dict = concat_dict(final_dict, bunched_dict)
                 bunched = json.dumps(bunched_dict, indent=1)
                 with open(bunched_chunk_path + "/" + chunk[:-5] + "_bunch.json", "w") as outfile:
                     outfile.write(bunched)
                 bunched_dict = {key: {} for key in unique_bunchkey_list}
-    with open(bunched_chunk_path + "/" + user_query_list[0] + "_chunk1" + "_bunch.json") as docread:
-        doc = json.load(docread)
+    doc = final_dict
     return doc
 
 def merge(user_query_list):
@@ -682,6 +710,7 @@ def merge(user_query_list):
 def sort(user_query_list):
     sorted_dict = {}
     uqlupper = list(map(str.upper, user_query_list))
+    aggset = {"SUM", "MEAN", "MIN", "MAX", "TOTALNUM"}
     sortnode = user_query_list[uqlupper.index("SORT") + 1]
     direction = None
     if "ASC" in uqlupper:
@@ -695,11 +724,14 @@ def sort(user_query_list):
         sorted_dict = sort_bunch(user_query_list, sortnode, direction)
     if "MERGE" in uqlupper:
         common_node = user_query_list[uqlupper.index("INCOMMON") + 1]
-        sorted_dict = sort_merge(user_query_list, common_node)
+        sorted_dict = sort_merge(user_query_list, common_node, direction)
     elif "BUNCH" not in uqlupper and "MERGE" not in uqlupper:
-        user_query_list.insert(0, 'FETCH')
-        directory = find_directory(user_query_list)
-        user_query_list = user_query_list[1:]
+        directory = "./" + user_query_list[0] + "_chunks"
+        if not aggset.isdisjoint(set(uqlupper)):
+            if "NODES" in uqlupper:
+                directory += "/col_agg"
+            else:
+                directory += "/agg"
         directory = sort_within_chunks(user_query_list, sortnode, directory)
         sorted_dict = sort_between_chunks(user_query_list, sortnode, directory)
     return sorted_dict
@@ -711,8 +743,8 @@ def simple_sort(doc, sortcol, direction, user_query_list=None):
         if direction == "ASC":
             sorted_doc = dict(sorted(doc.items(), key=lambda x: getitem(x[1], sortcol)))
         elif direction == "DESC":
-            sorted_doc = dict(sorted(doc.items(), key=lambda x: getitem(x[1], sortcol)))
-    elif "BUNCH" in list(map(str.upper, user_query_list)):
+            sorted_doc = dict(sorted(doc.items(), key=lambda x: getitem(x[1], sortcol), reverse=True))
+    elif "BUNCH" in list(map(str.upper, user_query_list)) or "MERGE" in list(map(str.upper, user_query_list)):
         if direction == "ASC":
             sorted_doc = {key: dict(sorted(values.items(), key=lambda x: x[1][sortcol])) for key, values in doc.items()}
         elif direction == "DESC":
@@ -720,6 +752,7 @@ def simple_sort(doc, sortcol, direction, user_query_list=None):
     return sorted_doc
 
 def sort_bunch(user_query_list, sortcol, direction):
+    final_sorted_doc = {}
     uqlupper = list(map(str.upper, user_query_list))
     agglist = ["TOTALNUM", "SUM", "MEAN", "MIN", "MAX"]
     agg_present = not set(agglist).isdisjoint(set(uqlupper))
@@ -741,14 +774,16 @@ def sort_bunch(user_query_list, sortcol, direction):
             if bunchcol[:-8] == sortcol:
                 doc_keys.sort()
                 sorted_doc = {i: doc[i] for i in doc_keys}
+                final_sorted_doc = concat_dict(final_sorted_doc, sorted_doc)
                 sorted_doc = json.dumps(sorted_doc, indent=1)
                 with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_on_bunch.json", "w") as outfile:
                     outfile.write(sorted_doc)
             else:
                 doc_num = 1
                 for key in doc_keys:
-                    newdoc = doc[key]
+                    newdoc = {key: doc[key]}
                     newdoc = simple_sort(newdoc, sortcol, direction, user_query_list)
+                    final_sorted_doc = concat_dict(final_sorted_doc, newdoc)
                     sorted_doc = json.dumps(newdoc, indent=1)
                     with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_level_" + str(doc_num) + ".json", "w") as outfile:
                         outfile.write(sorted_doc)
@@ -762,6 +797,7 @@ def sort_bunch(user_query_list, sortcol, direction):
             if bunchcol[:-8] == sortcol:
                 doc_keys.sort()
                 sorted_doc = {i: doc[i] for i in doc_keys}
+                final_sorted_doc = concat_dict(final_sorted_doc, sorted_doc)
                 sorted_doc = json.dumps(sorted_doc, indent=1)
                 with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_on_bunch.json", "w") as outfile:
                     outfile.write(sorted_doc)
@@ -770,24 +806,11 @@ def sort_bunch(user_query_list, sortcol, direction):
                 for key in doc_keys:
                     newdoc = {key: doc[key]}
                     newdoc = simple_sort(newdoc, sortcol, direction, user_query_list)
+                    final_sorted_doc = concat_dict(final_sorted_doc, newdoc)
                     sorted_doc = json.dumps(newdoc, indent=1)
                     with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted_level_" + str(doc_num) + ".json", "w") as outfile:
                         outfile.write(sorted_doc)
                     doc_num += 1
-    final_sorted_doc = {}
-    for filename in sorted(os.listdir(sorted_chunk_directory)):
-        if bunchcol[:-8] != sortcol:
-            if "level" in filename:
-                with open(sorted_chunk_directory + "/" + filename) as sortread:
-                    sorted_chunk = json.load(sortread)
-                for k, v in sorted_chunk.items():
-                    final_sorted_doc[k] = v
-        else:
-            if ("sorted_on_bunch" in filename) and (which_agg.lower() in filename):
-                with open(sorted_chunk_directory + "/" + filename) as sortread:
-                    sorted_chunk = json.load(sortread)
-                for k, v in sorted_chunk.items():
-                    final_sorted_doc[k] = v
     return final_sorted_doc
 
 def sort_merge(user_query_list, sortcol, direction):
@@ -805,7 +828,8 @@ def sort_merge(user_query_list, sortcol, direction):
         if os.path.isfile(directory1 + "/" + filename) and filename[0] != ".":
             with open(directory1 + "/" + filename) as newread:
                 newdoc = json.load(newread)
-            print('newdoc: ', newdoc)
+            if not set(["SUM", "MEAN", "MIN", "MAX", "TOTALNUM"]).isdisjoint(set(list(map(str.upper, user_query_list)))):
+                newdoc = agg_functions(user_query_list, newdoc)
             newdoc = simple_sort(newdoc, sortcol, direction)
             newdoc = json.dumps(newdoc, indent=1)
             with open(merged_directory1 + "/" + filename, "w") as outfile:
@@ -814,6 +838,10 @@ def sort_merge(user_query_list, sortcol, direction):
         if os.path.isfile(directory2 + "/" + filename) and filename[0] != ".":
             with open(directory2 + "/" + filename) as newread2:
                 newdoc2 = json.load(newread2)
+            if not set(["SUM", "MEAN", "MIN", "MAX", "TOTALNUM"]).isdisjoint(set(list(map(str.upper, user_query_list)))):
+                user_query_list[0] = doc2
+                newdoc2 = agg_functions(user_query_list, newdoc2)
+                user_query_list = doc1
             newdoc2 = simple_sort(newdoc2, sortcol, direction)
             newdoc2 = json.dumps(newdoc2, indent=1)
             with open(merged_directory2 + "/" + filename, "w") as outfile:
@@ -824,9 +852,9 @@ def sort_merge(user_query_list, sortcol, direction):
         for right_chunk in os.listdir(merged_directory2):
             if os.path.isfile(merged_directory1 + "/" + left_chunk) and os.path.isfile(merged_directory2 + "/" + right_chunk) and left_chunk[0] != "." and right_chunk[0] != ".":
                 if "merged" not in left_chunk and "merged" not in right_chunk:
-                    with open(directory1 + "/" + left_chunk) as leftread:
+                    with open(merged_directory1 + "/" + left_chunk) as leftread:
                         left = json.load(leftread)
-                    with open(directory2 + "/" + right_chunk) as rightread:
+                    with open(merged_directory2 + "/" + right_chunk) as rightread:
                         right = json.load(rightread)
                     for i1 in left.keys():
                         appdata1 = left[i1]
@@ -851,11 +879,11 @@ def sort_merge(user_query_list, sortcol, direction):
         outfile1.write(out)
     with open(merged_directory2 + "/" + doc2 + "_merged.csv", "w") as outfile2:
         outfile2.write(out)
-    return out
+    return match_dict
 
 def sort_within_chunks(user_query_list, sortnode, directory):
     uqlupper = list(map(str.upper, user_query_list))
-    sorted_chunk_directory = directory + "/sorted_chunks"
+    sorted_chunk_directory = "./" + user_query_list[0] + "_chunks/sorted_chunks"
     if not os.path.exists(sorted_chunk_directory):
         os.mkdir(sorted_chunk_directory)
     for chunk in os.listdir(directory):
@@ -863,9 +891,13 @@ def sort_within_chunks(user_query_list, sortnode, directory):
             with open(directory + "/" + chunk) as docread:
                 doc = json.load(docread)
                 if "ASC" in uqlupper:
-                    res = dict(sorted(doc, key = lambda x: getitem(x[1], sortnode)))
+                    keylist = sorted(doc, key=lambda x: doc[x][sortnode])
+                    valuelist = sorted(doc.values(), key=lambda x: x[sortnode])
+                    res = {key: value for key, value in zip(keylist, valuelist)}
                 elif "DESC" in uqlupper:
-                    res = dict(sorted(doc, key = lambda x: getitem(x[1], sortnode), reverse=True))
+                    keylist = sorted(doc, key=lambda x: doc[x][sortnode], reverse=True)
+                    valuelist = sorted(doc.values(), key=lambda x: x[sortnode], reverse=True)
+                    res = {key: value for key, value in zip(keylist, valuelist)}
             chunk_dump = json.dumps(res, indent=1)
             with open(sorted_chunk_directory + "/" + chunk[:-5] + "_sorted.json", "w") as outfile:
                 outfile.write(chunk_dump)
@@ -877,25 +909,41 @@ def chunk_dict(chunk_dict, size):
         yield {k: chunk_dict[k] for k in keys[i:(i + size)]}
 
 def sort_between_chunks(user_query_list, sortcol, directory):
+    uqlupper = list(map(str.upper, user_query_list))
     docname = user_query_list[0]
     if not os.path.exists("./" + docname + "_chunks/chunk_subsets"):
         os.mkdir("./" + docname + "_chunks/chunk_subsets")
     subset_count = 1
     for filename in os.listdir(directory): 
         if os.path.isfile(directory + "/" + filename) and filename[0] != ".":
-            file_to_subset = pd.read_json(directory + "/" + filename, orient='index')
+            with open(directory + "/" + filename, "r") as subsetread:
+                file_to_subset = json.load(subsetread)
             for file_subset in chunk_dict(file_to_subset, len(file_to_subset)):
                 file_subset_name = f"{filename.split('.')[0]}_subset{subset_count}.json"
-                file_subset_path = "./"+ docname + "_chunks/chunk_subsets/" + file_subset_name
+                file_subset_path = "./" + docname + "_chunks/chunk_subsets/" + file_subset_name
                 file_subset = json.dumps(file_subset, indent=1)
                 with open(file_subset_path, "w") as subset_write:
                     subset_write.write(file_subset)
                 subset_count += 1
     subset_files = os.listdir("./"+ docname + "_chunks/chunk_subsets")
     while len(subset_files) > 1:
-        chunk1 = pd.read_json(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files.pop(0)), orient='index') #get the first file 
-        chunk2 = pd.read_json(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files.pop(0)), orient='index') #second file 
-        pd.DataFrame(merge_asc(chunk1.values.tolist(), chunk2.values.tolist(), sortcol)).to_json(os.path.join("./"+ docname + "_chunks/chunk_subsets", f"merged_subset_{len(subset_files) + 1 }.json"), orient='index', indent=1)
+        with open(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files.pop(0))) as chunkread1:
+            chunk1 = json.load(chunkread1)
+        with open(os.path.join("./"+ docname + "_chunks/chunk_subsets", subset_files.pop(0))) as chunkread2:
+            chunk2 = json.load(chunkread2)
+        doc = chunk1.copy()
+        doc.update(chunk2)
+        if "ASC" in uqlupper:
+            keylist = sorted(doc, key=lambda x: doc[x][sortcol])
+            valuelist = sorted(doc.values(), key=lambda x: x[sortcol])
+            merged_chunk = {key: value for key, value in zip(keylist, valuelist)}
+        elif "DESC" in uqlupper:
+            keylist = sorted(doc, key=lambda x: doc[x][sortcol], reverse=True)
+            valuelist = sorted(doc.values(), key=lambda x: x[sortcol], reverse=True)
+            merged_chunk = {key: value for key, value in zip(keylist, valuelist)}
+        merged_out = json.dumps(merged_chunk, indent=1)
+        with open(os.path.join("./"+ docname + "_chunks/chunk_subsets", f"merged_subset_{len(subset_files) + 1 }.json"), "w") as outfile:
+            outfile.write(merged_out)
         subset_files.append(f"merged_subset_{len(subset_files) + 1 }.json")
     with open("./"+ docname + "_chunks/chunk_subsets/" + subset_files[0]) as outfile:
         final_merged_json = json.load(outfile)
@@ -926,14 +974,15 @@ def has(user_query_list):
     if "MERGE" in uqlupper:
        doc = has_logic(user_query_list, "merged_docs")
     elif "SORT" in uqlupper:
-        doc = has_logic(user_query_list, "chunk_subsets")
+        print("user_quer_list", user_query_list)
+        doc = has_logic(user_query_list, "sorted_chunks")
     elif "BUNCH" in uqlupper:
         if not set(agglist).isdisjoint(set(list(map(str.upper, user_query_list)))):
             doc = has_logic(user_query_list, "bunch_agg_chunks")
         else:
             doc = has_logic(user_query_list, "bunched_chunks")
     elif not set(agglist).isdisjoint(set(list(map(str.upper, user_query_list)))):
-        if "COLUMNS" in uqlupper:
+        if "NODES" in uqlupper:
             doc = has_logic(user_query_list, "col_agg")
         else:
             doc = has_logic(user_query_list, "agg")
@@ -942,6 +991,7 @@ def has(user_query_list):
     return doc
 
 def has_logic(user_query_list, directory):
+    final_dict = {}
     uqlupper = list(map(str.upper, user_query_list))
     condidx = uqlupper.index("HAS") + 1
     full_condition = ""
@@ -954,6 +1004,8 @@ def has_logic(user_query_list, directory):
         conds = user_query_list[condidx]
         full_condition = conds
     condition = full_condition.strip().replace("\"", "").replace("\'", "")
+    print("first item in uql ", user_query_list[0])
+    
     for chunk in os.listdir("./" + user_query_list[0] + "_chunks/" + directory):
         if os.path.isfile("./" + user_query_list[0] + "_chunks/" + directory + "/" + chunk) and chunk[0] != ".":
             if "MERGE" in uqlupper and "merged" in chunk:
@@ -962,75 +1014,212 @@ def has_logic(user_query_list, directory):
             elif "MERGE" not in uqlupper:
                 with open("./" + user_query_list[0] + "_chunks/" + directory + "/" + chunk) as docread:
                     doc = json.load(docread)
+            if len(list(doc.values())[0]) == 0:
+                continue
             if "<" in condition:
                 cond = condition.split("<")
                 col1 = cond[0]
                 cond2 = cond[1]
-                if col1 not in list(doc.values())[0]:
-                    return 
-                if cond2 not in list(doc.values())[0]:
-                    type1 = type(list(doc.items())[0][1][col1])
-                    if '.' in cond2:
-                        cond2 = float(cond2)
-                    elif cond2.isdigit():
-                        cond2 = int(cond2)
-                    type2 = type(cond2)
-                    if type1 == type2: 
-                        doc = {k: v for k, v in doc.items() if v[col1] < cond2}
-                    else:   
-                        if isinstance(type1, str) or isinstance(type2, str):
-                            print("Incompatible type comparison")
-                            return
-                        else:
+                if "MERGE" not in uqlupper and "BUNCH" not in uqlupper:
+                    if col1 not in list(doc.values())[0]:
+                        return 
+                    if cond2 not in list(doc.values())[0]:
+                        type1 = type(list(doc.items())[0][1][col1])
+                        if '.' in cond2:
+                            cond2 = float(cond2)
+                        elif cond2.isdigit():
+                            cond2 = int(cond2)
+                        type2 = type(cond2)
+                        if type1 == type2: 
                             doc = {k: v for k, v in doc.items() if v[col1] < cond2}
+                        else:   
+                            if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
+                                print("Incompatible type comparison")
+                                return
+                            else:
+                                doc = {k: v for k, v in doc.items() if v[col1] < cond2}
+                    else:
+                        doc = {k: v for k, v in doc.items() if v[col1] < v[cond2]}
                 else:
-                    doc = {k: v for k, v in doc.items() if v[col1] < v[cond2]}
+                    if col1 not in list((list(doc.values())[0]).values())[0]:
+                        return 
+                    if cond2 not in list((list(doc.values())[0]).values())[0]:
+                        type1 = type(list((list(doc.values())[0]).values())[0][col1])
+                        if '.' in cond2:
+                            cond2 = float(cond2)
+                        elif cond2.isdigit():
+                            cond2 = int(cond2)
+                        type2 = type(cond2)
+                        if type1 == type2:     
+                            keylist = list(doc.keys())
+                            mergednodeslist = list(doc.values())
+                            doc = {}
+                            for k, v in zip(keylist, mergednodeslist):
+                                for k1, v1 in v.items():
+                                    if v1[col1] < cond2:
+                                        if k not in doc.keys():
+                                            doc[k] = {}
+                                        doc[k][k1] = v1
+                        else:   
+                            if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
+                                print("Incompatible type comparison")
+                                return
+                            else:
+                                keylist = list(doc.keys())
+                                mergednodeslist = list(doc.values())
+                                doc = {}
+                                for k, v in zip(keylist, mergednodeslist):
+                                    for k1, v1 in v.items():
+                                        if v1[col1] < cond2:
+                                            if k not in doc.keys():
+                                                doc[k] = {}
+                                            doc[k][k1] = v1
+                    else:
+                        keylist = list(doc.keys())
+                        mergednodeslist = list(doc.values())
+                        doc = {}
+                        for k, v in zip(keylist, mergednodeslist):
+                            for k1, v1 in v.items():
+                                if v1[col1] < v[cond2]:
+                                    if k not in doc.keys():
+                                        doc[k] = {}
+                                    doc[k][k1] = v1
             elif ">" in condition:
                 cond = condition.split(">")
                 col1 = cond[0]
                 cond2 = cond[1]
-                if col1 not in list(doc.values())[0]:
-                    return 
-                if cond2 not in list(doc.values())[0]:
-                    type1 = type(list(doc.items())[0][1][col1])
-                    if '.' in cond2:
-                        cond2 = float(cond2)
-                    elif cond2.isdigit():
-                        cond2 = int(cond2)
-                    type2 = type(cond2)
-                    if type1 == type2: 
-                        doc = {k: v for k, v in doc.items() if v[col1] > cond2}
-                    else:   
-                        if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
-                            print("Incompatible type comparison")
-                            return
-                        else:
+                if "MERGE" not in uqlupper and "BUNCH" not in uqlupper:
+                    if col1 not in list(doc.values())[0]:
+                        return 
+                    if cond2 not in list(doc.values())[0]:
+                        type1 = type(list(doc.items())[0][1][col1])
+                        if '.' in cond2:
+                            cond2 = float(cond2)
+                        elif cond2.isdigit():
+                            cond2 = int(cond2)
+                        type2 = type(cond2)
+                        if type1 == type2: 
                             doc = {k: v for k, v in doc.items() if v[col1] > cond2}
+                        else:   
+                            if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
+                                print("Incompatible type comparison")
+                                return
+                            else:
+                                doc = {k: v for k, v in doc.items() if v[col1] > cond2}
+                    else:
+                        doc = {k: v for k, v in doc.items() if v[col1] > v[cond2]}
                 else:
-                    doc = {k: v for k, v in doc.items() if v[col1] > v[cond2]}
+                    if col1 not in list((list(doc.values())[0]).values())[0]:
+                        return 
+                    if cond2 not in list((list(doc.values())[0]).values())[0]:
+                        type1 = type(list((list(doc.values())[0]).values())[0][col1])
+                        if '.' in cond2:
+                            cond2 = float(cond2)
+                        elif cond2.isdigit():
+                            cond2 = int(cond2)
+                        type2 = type(cond2)
+                        if type1 == type2:     
+                            keylist = list(doc.keys())
+                            mergednodeslist = list(doc.values())
+                            doc = {}
+                            for k, v in zip(keylist, mergednodeslist):
+                                for k1, v1 in v.items():
+                                    if v1[col1] > cond2:
+                                        if k not in doc.keys():
+                                            doc[k] = {}
+                                        doc[k][k1] = v1
+                        else:   
+                            if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
+                                print("Incompatible type comparison")
+                                return
+                            else:
+                                keylist = list(doc.keys())
+                                mergednodeslist = list(doc.values())
+                                doc = {}
+                                for k, v in zip(keylist, mergednodeslist):
+                                    for k1, v1 in v.items():
+                                        if v1[col1] > cond2:
+                                            if k not in doc.keys():
+                                                doc[k] = {}
+                                            doc[k][k1] = v1
+                    else:
+                        keylist = list(doc.keys())
+                        mergednodeslist = list(doc.values())
+                        doc = {}
+                        for k, v in zip(keylist, mergednodeslist):
+                            for k1, v1 in v.items():
+                                if v1[col1] > v[cond2]:
+                                    if k not in doc.keys():
+                                        doc[k] = {}
+                                    doc[k][k1] = v1
             elif "=" in condition:
                 cond = condition.split("=")
                 col1 = cond[0]
                 cond2 = cond[1]
-                if col1 not in list(doc.values())[0]:
-                    return 
-                if cond2 not in list(doc.values())[0]:
-                    type1 = type(list(doc.items())[0][1][col1])
-                    if '.' in cond2:
-                        cond2 = float(cond2)
-                    elif cond2.isdigit():
-                        cond2 = int(cond2)
-                    type2 = type(cond2)
-                    if type1 == type2: 
-                        doc = {k: v for k, v in doc.items() if v[col1] == cond2}
-                    else:   
-                        if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
-                            print("Incompatible type comparison")
-                            return
-                        else:
+                if "MERGE" not in uqlupper and "BUNCH" not in uqlupper:
+                    if col1 not in list(doc.values())[0]:
+                        return 
+                    if cond2 not in list(doc.values())[0]:
+                        type1 = type(list(doc.items())[0][1][col1])
+                        if '.' in cond2:
+                            cond2 = float(cond2)
+                        elif cond2.isdigit():
+                            cond2 = int(cond2)
+                        type2 = type(cond2)
+                        if type1 == type2: 
                             doc = {k: v for k, v in doc.items() if v[col1] == cond2}
+                        else:   
+                            if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
+                                print("Incompatible type comparison")
+                                return
+                            else:
+                                doc = {k: v for k, v in doc.items() if v[col1] == cond2}
+                    else:
+                        doc = {k: v for k, v in doc.items() if v[col1] == v[cond2]}
                 else:
-                    doc = {k: v for k, v in doc.items() if v[col1] == v[cond2]}
+                    if col1 not in list((list(doc.values())[0]).values())[0]:
+                        return 
+                    if cond2 not in list((list(doc.values())[0]).values())[0]:
+                        type1 = type(list((list(doc.values())[0]).values())[0][col1])
+                        if '.' in cond2:
+                            cond2 = float(cond2)
+                        elif cond2.isdigit():
+                            cond2 = int(cond2)
+                        type2 = type(cond2)
+                        if type1 == type2:     
+                            keylist = list(doc.keys())
+                            mergednodeslist = list(doc.values())
+                            doc = {}
+                            for k, v in zip(keylist, mergednodeslist):
+                                for k1, v1 in v.items():
+                                    if v1[col1] == cond2:
+                                        if k not in doc.keys():
+                                            doc[k] = {}
+                                        doc[k][k1] = v1
+                        else:   
+                            if isinstance(type1, str) or isinstance(type2, str) or isinstance(type1, date) or isinstance(type2, date):
+                                print("Incompatible type comparison")
+                                return
+                            else:
+                                keylist = list(doc.keys())
+                                mergednodeslist = list(doc.values())
+                                doc = {}
+                                for k, v in zip(keylist, mergednodeslist):
+                                    for k1, v1 in v.items():
+                                        if v1[col1] == cond2:
+                                            if k not in doc.keys():
+                                                doc[k] = {}
+                                            doc[k][k1] = v1
+                    else:
+                        keylist = list(doc.keys())
+                        mergednodeslist = list(doc.values())
+                        doc = {}
+                        for k, v in zip(keylist, mergednodeslist):
+                            for k1, v1 in v.items():
+                                if v1[col1] == v[cond2]:
+                                    if k not in doc.keys():
+                                        doc[k] = {}
+                                    doc[k][k1] = v1
         else:
             continue
         if not os.path.exists("./" + user_query_list[0] + "_chunks/" + directory + "/has_chunks"):
@@ -1038,4 +1227,10 @@ def has_logic(user_query_list, directory):
         out = json.dumps(doc, indent=1)
         with open("./" + user_query_list[0] + "_chunks/" + directory + "/has_chunks/"+ user_query_list[0] + "_has.json", "w") as outfile:
             outfile.write(out)
-        return doc
+        final_dict = concat_dict(final_dict, doc)
+        if "SORT" in uqlupper:
+            if "MERGE" in uqlupper:
+                final_dict = simple_sort(final_dict, sortcol=user_query_list[uqlupper.index("SORT") + 1], direction=uqlupper[uqlupper.index("SORT") + 2], user_query_list=user_query_list)
+            else:
+                final_dict = simple_sort(final_dict, sortcol=user_query_list[uqlupper.index("SORT") + 1], direction=uqlupper[uqlupper.index("SORT") + 2])
+    return final_dict
