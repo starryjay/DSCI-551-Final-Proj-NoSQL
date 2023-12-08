@@ -1003,9 +1003,7 @@ def has_logic(user_query_list, directory):
     else:
         conds = user_query_list[condidx]
         full_condition = conds
-    condition = full_condition.strip().replace("\"", "").replace("\'", "")
-    print("first item in uql ", user_query_list[0])
-    
+    condition = full_condition.strip().replace("\"", "").replace("\'", "")    
     for chunk in os.listdir("./" + user_query_list[0] + "_chunks/" + directory):
         if os.path.isfile("./" + user_query_list[0] + "_chunks/" + directory + "/" + chunk) and chunk[0] != ".":
             if "MERGE" in uqlupper and "merged" in chunk:
